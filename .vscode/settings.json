@@ -1,0 +1,20 @@
+{
+  "files.associations": {
+    "*.mdx": "markdown"
+  },
+  "workbench.editorAssociations": {
+    "*.svg": "default"
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+
+  "editor.inlineSuggest.enabled": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "prettier.documentSelectors": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "prettier.configPath": ".prettierrc.mjs",
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2
+}
