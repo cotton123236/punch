@@ -35,7 +35,10 @@ useTexture.preload('/models/band.png')
 export default function Badge({ className }: { className?: string }) {
   return (
     <div className={cn('h-full w-full', className)}>
-      <Canvas camera={{ position: [0, 0, 15], fov: 25 }}>
+      <Canvas
+        className="badge-canvas touch-pan-y"
+        camera={{ position: [0, 0, 15], fov: 25 }}
+      >
         <Scene />
       </Canvas>
     </div>
@@ -151,15 +154,23 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
 
   const lockScroller = useCallback(() => {
     const scroller = document.querySelector<HTMLElement>('.scene-scroller')
+    const canvas = document.querySelector<HTMLCanvasElement>('.badge-canvas')
     if (scroller) {
       scroller.style.overflow = 'hidden'
+    }
+    if (canvas) {
+      canvas.style.touchAction = 'none'
     }
   }, [])
 
   const unlockScroller = useCallback(() => {
     const scroller = document.querySelector<HTMLElement>('.scene-scroller')
+    const canvas = document.querySelector<HTMLCanvasElement>('.badge-canvas')
     if (scroller) {
       scroller.style.removeProperty('overflow')
+    }
+    if (canvas) {
+      canvas.style.removeProperty('touchAction')
     }
   }, [])
 
