@@ -9,18 +9,21 @@ const CalendarItem = ({
   data,
   index,
   className,
+  todayRef,
   ref
 }: {
   data: MonthDetailDataItem
   index: number
   className?: string
-  ref: React.RefObject<HTMLDivElement>
+  todayRef: React.RefObject<HTMLDivElement>
+  ref: React.RefObject<HTMLDivElement[]>
 }) => {
-  const newDate = new Date(data.date)
-  const date = newDate.getDate().toString().padStart(2, '0')
-  const weekday = newDate.toLocaleDateString('en', { weekday: 'long' }) + '.'
-  const month = newDate.toLocaleDateString('en', { month: 'short' }) + '.'
-  const isToday = newDate.toLocaleDateString('en') === new Date().toLocaleDateString('en')
+  const currentDate = new Date(data.date)
+  const date = currentDate.getDate().toString().padStart(2, '0')
+  const weekday = currentDate.toLocaleDateString('en', { weekday: 'long' }) + '.'
+  const month = currentDate.toLocaleDateString('en', { month: 'short' }) + '.'
+  const isToday = currentDate.toLocaleDateString('en') === new Date().toLocaleDateString('en')
+  const isBeforeToday = currentDate.getTime() < new Date().getTime() || isToday
   const punchTime = [data.timeStart, data.timeEnd]
   const isAbnormal = data.compareStatus > 0
 
@@ -28,7 +31,10 @@ const CalendarItem = ({
     <div
       ref={(el) => {
         if (el && isToday) {
-          ref.current = el
+          todayRef.current = el
+        }
+        if (el) {
+          ref.current[index] = el
         }
       }}
       data-calendar-item
@@ -56,23 +62,16 @@ const CalendarItem = ({
           </span>
           <span className={cn('block', isToday ? 'text-primary-foreground' : 'text-tertiary-foreground')}>{month}</span>
         </div>
-        {data.workTypeString !== '工作日' ? (
-          <div
-            className={cn(
-              'ml-auto',
-              !isToday && 'translate-x-2 opacity-0 duration-300 group-hover:translate-x-0 group-hover:opacity-100'
-            )}
-          >
+        <div
+          className={cn(
+            'ml-auto flex flex-col items-end',
+            !isBeforeToday && 'translate-x-2 opacity-0 duration-300 group-hover:translate-x-0 group-hover:opacity-100'
+          )}
+        >
+          {data.workTypeString !== '工作日' ? (
             <span className={cn(isToday ? 'text-foreground' : 'text-secondary-foreground')}>day off!</span>
-          </div>
-        ) : data.compareStatus > -1 || (data.workTypeString === '工作日' && isToday) ? (
-          <div
-            className={cn(
-              'ml-auto flex flex-col items-end',
-              !isToday && 'translate-x-2 opacity-0 duration-300 group-hover:translate-x-0 group-hover:opacity-100'
-            )}
-          >
-            {punchTime.map((time, index) => (
+          ) : data.workTypeString === '工作日' ? (
+            punchTime.map((time, index) => (
               <div
                 key={`${date}-${index}`}
                 className="flex items-center gap-1"
@@ -88,9 +87,9 @@ const CalendarItem = ({
                   {index === 0 ? 'in' : 'out'}
                 </span>
               </div>
-            ))}
-          </div>
-        ) : null}
+            ))
+          ) : null}
+        </div>
         {isAbnormal && (
           <div className="bg-sunrise absolute top-1/2 right-0 h-[.375rem] w-[.375rem] -translate-y-1/2 rounded-full duration-300 group-hover:translate-x-2 group-hover:opacity-0"></div>
         )}
@@ -111,6 +110,7 @@ export default function Calendar({
   const monthDetail = useAtomValue(monthDetailAtom)
   const todayRef = useRef<HTMLDivElement>(null!)
   const scrollerRef = useRef<HTMLDivElement>(null!)
+  const itemRefs = useRef<HTMLDivElement[]>([])
 
   // 拖曳滾動相關狀態
   const [isDragging, setIsDragging] = useState(false)
@@ -222,6 +222,7 @@ export default function Calendar({
     }
   }, [handleMouseMove, handleMouseUp, isTouchDevice])
 
+  // 初始滾動到今天
   useEffect(() => {
     if (todayRef.current && scrollerRef.current) {
       const scrollerPaddingYDiff = 76
@@ -233,6 +234,66 @@ export default function Calendar({
       })
     }
   }, [todayRef, scrollerRef])
+
+  // 滾動遮罩計算
+  useEffect(() => {
+    if (scrollerRef.current) {
+      const scroller = scrollerRef.current
+      const setScrollMask = () => {
+        const scrollTop = scroller.scrollTop
+        const scrollHeight = scroller.scrollHeight
+        const height = scroller.getBoundingClientRect().height
+        const scrollDiff = scrollHeight - height
+        const maskTop = (Math.min(scrollTop / scrollDiff, 0.1) * 100 * 2).toFixed(1)
+        const maskBottom = (100 - Math.min((scrollDiff - scrollTop) / scrollDiff, 0.1) * 100 * 2).toFixed(1)
+        scroller.style.setProperty('--mask-top', `${maskTop}%`)
+        scroller.style.setProperty('--mask-bottom', `${maskBottom}%`)
+      }
+      setScrollMask()
+      scroller.addEventListener('scroll', setScrollMask)
+      return () => scroller.removeEventListener('scroll', setScrollMask)
+    }
+  }, [scrollerRef])
+
+  // // item scaleY 效果
+  // useEffect(() => {
+  //   if (itemRefs.current.length > 0 && scrollerRef.current) {
+  //     const scroller = scrollerRef.current
+  //     const items = itemRefs.current
+  //     const observingItems = new Set<HTMLDivElement>(items)
+  //     const observer = new IntersectionObserver((entries) => {
+  //       entries.forEach((entry) => {
+  //         if (entry.isIntersecting) {
+  //           observingItems.add(entry.target as HTMLDivElement)
+  //         } else {
+  //           observingItems.delete(entry.target as HTMLDivElement)
+  //         }
+  //       })
+  //     })
+  //     items.forEach((item) => {
+  //       observer.observe(item)
+  //     })
+
+  //     const onScroll = () => {
+  //       observingItems.forEach((item) => {
+  //         const distanceToCenter = Math.abs(
+  //           scroller.getBoundingClientRect().height / 2 -
+  //             (item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2)
+  //         )
+  //         const scaleY = 1 - (distanceToCenter / (scroller.getBoundingClientRect().height / 2)) * 0.2
+  //         item.style.transform = `scaleY(${scaleY})`
+  //       })
+  //     }
+  //     onScroll()
+  //     scroller.addEventListener('scroll', onScroll)
+  //     return () => {
+  //       items.forEach((item) => {
+  //         observer.unobserve(item)
+  //       })
+  //       scroller.removeEventListener('scroll', onScroll)
+  //     }
+  //   }
+  // }, [itemRefs, scrollerRef])
 
   return (
     <div
@@ -250,6 +311,10 @@ export default function Calendar({
           isTouchDevice() && 'snap-y snap-mandatory',
           !isTouchDevice() && isDragging ? 'cursor-grabbing' : 'cursor-default'
         )}
+        style={{
+          maskImage:
+            'linear-gradient(to bottom, transparent, black var(--mask-top, 20%), black var(--mask-bottom, 80%), transparent)'
+        }}
         onMouseDown={handleMouseDown}
       >
         {monthDetail &&
@@ -259,7 +324,8 @@ export default function Calendar({
                 key={item.dateString}
                 data={item}
                 index={index}
-                ref={todayRef}
+                todayRef={todayRef}
+                ref={itemRefs}
                 className={cn(isTouchDevice() && 'snap-center')}
               />
             )

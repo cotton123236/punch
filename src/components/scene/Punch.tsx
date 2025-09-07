@@ -35,10 +35,26 @@ const AddressList = ({ className }: { className?: string }) => {
   const swiper = useRef<SwiperType | null>(null)
   const hasInitializedAddress = useRef<boolean>(false)
   const currentAddressIndex = addressList?.findIndex((address) => address.id === currentAddressId) || 0
+  const repetitions = 2
+
+  // const setSlidesParallax = (swiperInstance: SwiperType) => {
+  //   if (!swiperInstance) return
+  //   const { el, slides } = swiperInstance
+  //   const { left: swiperLeft, width: swiperWidth } = el.getBoundingClientRect()
+  //   slides.forEach((slide) => {
+  //     const distanceToCenter = Math.abs(
+  //       swiperLeft + swiperWidth / 2 - (slide.getBoundingClientRect().left + slide.getBoundingClientRect().width / 2)
+  //     )
+  //     const scale = Math.round((1 - (distanceToCenter / (swiperWidth / 2)) * 0.21) * 100) / 100
+  //     const opacity = Math.max(Math.round((1 - (distanceToCenter / (swiperWidth / 2)) * 1.21) * 100) / 100, 0.1)
+  //     slide.style.transform = `scale(${scale})`
+  //     slide.style.opacity = `${opacity}`
+  //   })
+  // }
 
   // 設定 swiper 寬度
   useEffect(() => {
-    if (buttonRefs.current.length / 2 === addressList?.length) {
+    if (buttonRefs.current.length / repetitions === addressList?.length) {
       const width = Number(
         (
           buttonRefs.current
@@ -84,10 +100,6 @@ const AddressList = ({ className }: { className?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthDetail, addressList, buttonRefs, swiper])
 
-  useEffect(() => {
-    console.log(currentAddressId)
-  }, [currentAddressId])
-
   return addressList?.length ? (
     <>
       <div className="relative">
@@ -109,44 +121,52 @@ const AddressList = ({ className }: { className?: string }) => {
           onRealIndexChange={(swiperInstance) => {
             setCurrentAddressId(addressList[swiperInstance.realIndex % addressList.length].id)
           }}
+          // onProgress={(swiperInstance) => {
+          //   setSlidesParallax(swiperInstance)
+          // }}
+          // onTransitionEnd={(swiperInstance) => {
+          //   setSlidesParallax(swiperInstance)
+          // }}
           style={{ width: swiperWidth }}
           className={cn(
             'relative z-10 mask-[image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
             className
           )}
         >
-          {[...addressList, ...addressList]?.map((address, index) => (
-            <SwiperSlide
-              key={`${address.id}-${index}`}
-              className="!w-auto"
-            >
-              <button
-                ref={(el) => {
-                  if (el) {
-                    buttonRefs.current[index] = el
-                  }
-                }}
-                type="button"
-                className={cn(
-                  'cursor-pointer p-2 pt-3 duration-300',
-                  isDragging && currentAddressId !== address.id && 'opacity-0',
-                  currentAddressId === address.id && 'pointer-events-none'
-                )}
-                data-address-id={address.id}
-                onClick={() => {
-                  swiper.current?.slideToLoop(index)
-                }}
+          {Array.from({ length: repetitions }, () => addressList)
+            .flat()
+            ?.map((address, index) => (
+              <SwiperSlide
+                key={`${address.id}-${index}`}
+                className="!w-auto"
               >
-                <span
-                  className="inline-block text-base leading-[1] md:text-lg"
-                  data-swiper-parallax-scale="0.8"
-                  data-swiper-parallax-opacity="0.1"
+                <button
+                  ref={(el) => {
+                    if (el) {
+                      buttonRefs.current[index] = el
+                    }
+                  }}
+                  type="button"
+                  className={cn(
+                    'cursor-pointer p-2 pt-3 duration-300',
+                    isDragging && currentAddressId !== address.id && 'opacity-0',
+                    currentAddressId === address.id && 'pointer-events-none'
+                  )}
+                  data-address-id={address.id}
+                  onClick={() => {
+                    swiper.current?.slideToLoop(index)
+                  }}
                 >
-                  {address.name}
-                </span>
-              </button>
-            </SwiperSlide>
-          ))}
+                  <span
+                    className="inline-block text-base leading-[1] md:text-lg"
+                    data-swiper-parallax-scale="0.8"
+                    data-swiper-parallax-opacity="0.1"
+                  >
+                    {address.name}
+                  </span>
+                </button>
+              </SwiperSlide>
+            ))}
         </Swiper>
         <div
           className={cn(

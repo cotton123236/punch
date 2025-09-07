@@ -36,7 +36,7 @@ export default function Badge({ className }: { className?: string }) {
   return (
     <div className={cn('h-full w-full', className)}>
       <Canvas
-        className="badge-canvas touch-pan-y"
+        className="badge-canvas touch-pan-x"
         camera={{ position: [0, 0, 15], fov: 25 }}
       >
         <Scene />
@@ -170,7 +170,7 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
       scroller.style.removeProperty('overflow')
     }
     if (canvas) {
-      canvas.style.removeProperty('touchAction')
+      canvas.style.removeProperty('touch-action')
     }
   }, [])
 
