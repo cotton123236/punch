@@ -48,7 +48,7 @@ export const viewport: Viewport = {
     },
     {
       media: '(prefers-color-scheme: light)',
-      color: 'FFFFFF'
+      color: 'f2f2f2'
     }
   ]
 }
@@ -64,6 +64,18 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta
+          name="mobile-web-app-capable"
+          content="yes"
+        />
+        <meta
+          name="apple-mobile-web-app-capable"
+          content="yes"
+        />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <script
           id="theme-script"
           dangerouslySetInnerHTML={{
