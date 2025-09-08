@@ -244,8 +244,8 @@ export default function Calendar({
         const scrollHeight = scroller.scrollHeight
         const height = scroller.getBoundingClientRect().height
         const scrollDiff = scrollHeight - height
-        const maskTop = (Math.min(scrollTop / scrollDiff, 0.1) * 100 * 2).toFixed(1)
-        const maskBottom = (100 - Math.min((scrollDiff - scrollTop) / scrollDiff, 0.1) * 100 * 2).toFixed(1)
+        const maskTop = (Math.min(scrollTop / scrollDiff, 0.1) * 100 * 2.5).toFixed(1)
+        const maskBottom = (100 - Math.min((scrollDiff - scrollTop) / scrollDiff, 0.1) * 100 * 2.5).toFixed(1)
         scroller.style.setProperty('--mask-top', `${maskTop}%`)
         scroller.style.setProperty('--mask-bottom', `${maskBottom}%`)
       }
@@ -255,45 +255,45 @@ export default function Calendar({
     }
   }, [scrollerRef])
 
-  // item scaleY 效果
-  useEffect(() => {
-    if (itemRefs.current.length > 0 && scrollerRef.current) {
-      const scroller = scrollerRef.current
-      const items = itemRefs.current
-      const observingItems = new Set<HTMLDivElement>(items)
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            observingItems.add(entry.target as HTMLDivElement)
-          } else {
-            observingItems.delete(entry.target as HTMLDivElement)
-          }
-        })
-      })
-      items.forEach((item) => {
-        observer.observe(item)
-      })
+  // // item scaleY 效果
+  // useEffect(() => {
+  //   if (itemRefs.current.length > 0 && scrollerRef.current) {
+  //     const scroller = scrollerRef.current
+  //     const items = itemRefs.current
+  //     const observingItems = new Set<HTMLDivElement>(items)
+  //     const observer = new IntersectionObserver((entries) => {
+  //       entries.forEach((entry) => {
+  //         if (entry.isIntersecting) {
+  //           observingItems.add(entry.target as HTMLDivElement)
+  //         } else {
+  //           observingItems.delete(entry.target as HTMLDivElement)
+  //         }
+  //       })
+  //     })
+  //     items.forEach((item) => {
+  //       observer.observe(item)
+  //     })
 
-      const onScroll = () => {
-        observingItems.forEach((item) => {
-          const distanceToCenter = Math.abs(
-            scroller.getBoundingClientRect().height / 2 -
-              (item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2)
-          )
-          const scaleY = 1 - (distanceToCenter / (scroller.getBoundingClientRect().height / 2)) * 0.2
-          item.style.transform = `scaleY(${scaleY})`
-        })
-      }
-      onScroll()
-      scroller.addEventListener('scroll', onScroll)
-      return () => {
-        items.forEach((item) => {
-          observer.unobserve(item)
-        })
-        scroller.removeEventListener('scroll', onScroll)
-      }
-    }
-  }, [itemRefs, scrollerRef])
+  //     const onScroll = () => {
+  //       observingItems.forEach((item) => {
+  //         const distanceToCenter = Math.abs(
+  //           scroller.getBoundingClientRect().height / 2 -
+  //             (item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2)
+  //         )
+  //         const scaleY = 1 - (distanceToCenter / (scroller.getBoundingClientRect().height / 2)) * 0.2
+  //         item.style.transform = `scaleY(${scaleY})`
+  //       })
+  //     }
+  //     onScroll()
+  //     scroller.addEventListener('scroll', onScroll)
+  //     return () => {
+  //       items.forEach((item) => {
+  //         observer.unobserve(item)
+  //       })
+  //       scroller.removeEventListener('scroll', onScroll)
+  //     }
+  //   }
+  // }, [itemRefs, scrollerRef])
 
   return (
     <div

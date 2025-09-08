@@ -23,7 +23,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import Badge from '@/components/ui/Badge'
 import { LiquidGlass } from 'simple-liquid-glass'
 
-const AddressList = ({ className }: { className?: string }) => {
+const AddressList = ({ className, isPunched }: { className?: string; isPunched: boolean | null }) => {
   const monthDetail = useAtomValue(monthDetailAtom)
   const addressList = useAtomValue(addressListAtom)
   const windowWidth = useAtomValue(windowWidthAtom)
@@ -33,24 +33,46 @@ const AddressList = ({ className }: { className?: string }) => {
   const [swiperWidth, setSwiperWidth] = useState<number>(0)
   const buttonRefs = useRef<HTMLButtonElement[]>([])
   const swiper = useRef<SwiperType | null>(null)
-  const hasInitializedAddress = useRef<boolean>(false)
-  const currentAddressIndex = addressList?.findIndex((address) => address.id === currentAddressId) || 0
-  const repetitions = 2
+  const [hasUpdatedSwiper, setHasUpdatedSwiper] = useState<boolean>(false)
+  const repetitions = 4
 
-  // const setSlidesParallax = (swiperInstance: SwiperType) => {
-  //   if (!swiperInstance) return
-  //   const { el, slides } = swiperInstance
-  //   const { left: swiperLeft, width: swiperWidth } = el.getBoundingClientRect()
-  //   slides.forEach((slide) => {
-  //     const distanceToCenter = Math.abs(
-  //       swiperLeft + swiperWidth / 2 - (slide.getBoundingClientRect().left + slide.getBoundingClientRect().width / 2)
-  //     )
-  //     const scale = Math.round((1 - (distanceToCenter / (swiperWidth / 2)) * 0.21) * 100) / 100
-  //     const opacity = Math.max(Math.round((1 - (distanceToCenter / (swiperWidth / 2)) * 1.21) * 100) / 100, 0.1)
-  //     slide.style.transform = `scale(${scale})`
-  //     slide.style.opacity = `${opacity}`
-  //   })
-  // }
+  // 計算 initial slide
+  const getInitaiSlide = (): number => {
+    if (!addressList || !monthDetail) return 0
+    const currentAddressIndex = addressList.findIndex((address) => address.id === currentAddressId) || 0
+    const todayDetail = monthDetail.find(
+      (detail) => new Date(detail.date).toLocaleDateString('en') === new Date().toLocaleDateString('en')
+    )
+    if (!todayDetail) return currentAddressIndex
+
+    const isNotWorkDay = todayDetail.workTypeString !== '工作日'
+
+    const now = new Date()
+    const currentTime = now.getHours() * 60 + now.getMinutes() // 分鐘
+
+    const morningLimit = 9 * 60 + 20 // 9:20
+    const eveningLimit = 19 * 60 + 40 // 19:40
+    const isEarlyMorning = currentTime < morningLimit
+    const isLateEvening = currentTime > eveningLimit
+    const isPunchIn =
+      todayDetail.timeStart &&
+      (todayDetail.timeStart.split(':').length === 2
+        ? todayDetail.timeStart
+            .split(':')
+            .map(Number)
+            .reduce((acc, current, index) => acc + current * (index === 0 ? 60 : 1), 0) +
+            9 * 60 <
+          currentTime
+        : false)
+    const isPunchOut = todayDetail.timeStart
+
+    if (isNotWorkDay || isEarlyMorning || isLateEvening || isPunchIn || isPunchOut) {
+      const offAddressIndex = addressList.findIndex((address) => address.id === 'off') || 0
+      return offAddressIndex
+    }
+
+    return currentAddressIndex
+  }
 
   // 設定 swiper 寬度
   useEffect(() => {
@@ -66,48 +88,44 @@ const AddressList = ({ className }: { className?: string }) => {
     }
   }, [buttonRefs, addressList, windowWidth])
 
+  // update swiper at the first time
   useEffect(() => {
-    if (!monthDetail || monthDetail.length === 0 || hasInitializedAddress.current || !swiper.current) return
+    const timer = setTimeout(() => {
+      if (!swiper.current || hasUpdatedSwiper) return
+      swiper.current.update()
+      setHasUpdatedSwiper(true)
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [swiper, hasUpdatedSwiper])
 
-    const todayDetail = monthDetail.find(
-      (detail) => new Date(detail.date).toLocaleDateString('en') === new Date().toLocaleDateString('en')
-    )
-    if (!todayDetail) return
-
-    const isNotWorkDay = todayDetail.workTypeString !== '工作日'
-
-    const now = new Date()
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
-    const currentTime = currentHour * 60 + currentMinute // 分鐘
-
-    const morningLimit = 9 * 60 + 20 // 9:20
-    const eveningLimit = 19 * 60 + 40 // 19:40
-    const isEarlyMorning = currentTime < morningLimit
-    const isLateEvening = currentTime > eveningLimit
-
-    if (isNotWorkDay || isEarlyMorning || isLateEvening) {
-      setCurrentAddressId('off')
-      hasInitializedAddress.current = true
-
-      setTimeout(() => {
-        if (!swiper.current) return
-        const offAddressIndex = addressList?.findIndex((address) => address.id === 'off') || 0
-        swiper.current.slideToLoop(offAddressIndex + (addressList?.length || 0))
-      }, 100)
-      hasInitializedAddress.current = true
-    }
+  // update swiper to off address when isPunched
+  useEffect(() => {
+    if (!isPunched || !addressList || !swiper.current) return
+    const offAddressIndex = addressList.findIndex((address) => address.id === 'off') || 0
+    const closestOffAddressIndex =
+      Math.floor(swiper.current.realIndex / addressList.length) * addressList.length + offAddressIndex
+    swiper.current.slideToLoop(closestOffAddressIndex)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthDetail, addressList, buttonRefs, swiper])
+  }, [isPunched])
 
-  return addressList?.length ? (
+  // see current address id change
+  useEffect(() => {
+    console.log(currentAddressId)
+  }, [currentAddressId])
+
+  return addressList?.length && monthDetail ? (
     <>
-      <div className="relative">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={hasUpdatedSwiper ? { opacity: 1, y: 0 } : false}
+        transition={{ duration: 1, ease: cubicBezier(0.85, 0, 0.15, 1) }}
+        className="relative"
+      >
         <Swiper
           modules={[FreeMode, Parallax]}
           slidesPerView={addressList.length}
           spaceBetween={8}
-          initialSlide={currentAddressIndex + addressList.length}
+          initialSlide={getInitaiSlide() + addressList.length}
           loop={true}
           centeredSlides={true}
           parallax={true}
@@ -121,12 +139,6 @@ const AddressList = ({ className }: { className?: string }) => {
           onRealIndexChange={(swiperInstance) => {
             setCurrentAddressId(addressList[swiperInstance.realIndex % addressList.length].id)
           }}
-          // onProgress={(swiperInstance) => {
-          //   setSlidesParallax(swiperInstance)
-          // }}
-          // onTransitionEnd={(swiperInstance) => {
-          //   setSlidesParallax(swiperInstance)
-          // }}
           style={{ width: swiperWidth }}
           className={cn(
             'relative z-10 mask-[image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
@@ -187,7 +199,7 @@ const AddressList = ({ className }: { className?: string }) => {
             className={cn('clock-shadow', isSafariOrIOS && 'backdrop-blur-[.375rem]')}
           ></LiquidGlass>
         </div>
-      </div>
+      </motion.div>
     </>
   ) : null
 }
@@ -279,7 +291,7 @@ const ClockNumber = ({ prev, current, duration = 1 }: { prev: string; current: s
 
 const Clock = ({
   ref,
-  isPunched = false,
+  isPunched,
   setIsPunched,
   className
 }: {
@@ -436,7 +448,7 @@ export default function Punch({
             isDragging && 'translate-y-[calc(var(--height-nav)*0.5)]'
           )}
         >
-          <AddressList />
+          <AddressList isPunched={isPunched} />
           <Clock
             ref={clockRef}
             isPunched={isPunched}

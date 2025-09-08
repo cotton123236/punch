@@ -357,7 +357,7 @@ export const usePunch = () => {
 
       const cardGpsResponse = await apiClient.auth.cardGps(accessToken, body)
 
-      console.log(cardGpsResponse)
+      // console.log(cardGpsResponse)
 
       if (cardGpsResponse.code === 200) {
         return cardGpsResponse
