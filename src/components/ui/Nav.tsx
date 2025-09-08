@@ -46,7 +46,7 @@ export default function Nav() {
       initial={!isDragging ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
       animate={!isDragging ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={!isDragging ? { duration: 0.8, ease: cubicBezier(0.85, 0, 0.15, 1) } : { duration: 0.3 }}
-      className="fixed bottom-5 left-1/2 z-[99] -translate-x-1/2 lg:bottom-8"
+      className="fixed bottom-8 left-1/2 z-[99] -translate-x-1/2 lg:bottom-12"
     >
       <LiquidGlass
         mode="preset"

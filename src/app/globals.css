@@ -173,7 +173,7 @@
 }
 
 @utility py-scene {
-  @apply pt-5 pb-[calc(var(--height-nav)+2rem)] lg:pb-[calc(var(--height-nav)+3rem)];
+  @apply pt-8 pb-[calc(var(--height-nav)+3rem)] lg:pb-[calc(var(--height-nav)+4rem)];
 }
 
 @utility p-scene {

@@ -61,10 +61,10 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
             .split(':')
             .map(Number)
             .reduce((acc, current, index) => acc + current * (index === 0 ? 60 : 1), 0) +
-            9 * 60 <
+            9 * 60 >
           currentTime
-        : false)
-    const isPunchOut = todayDetail.timeStart
+        : false) // is punch in but can't punch out
+    const isPunchOut = !!todayDetail.timeEnd
 
     if (isNotWorkDay || isEarlyMorning || isLateEvening || isPunchIn || isPunchOut) {
       const offAddressIndex = addressList.findIndex((address) => address.id === 'off') || 0
