@@ -164,7 +164,10 @@ export default function Settings({ className }: { className?: string }) {
             const newSubscription = await subscribeToPush()
             if (newSubscription) {
               const subscription = newSubscription as unknown as WebPushSubscription
-              await sendNotification(subscription, 'Subscribe Notification Success!')
+              await sendNotification(subscription, {
+                title: '打卡提醒開啟',
+                body: '已成功開啟打卡提醒，將在工作日設定時間內收到通知！'
+              })
             } else {
               setIsNotificationEnabled(false)
             }

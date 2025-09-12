@@ -142,6 +142,7 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
           style={{ width: swiperWidth }}
           className={cn(
             'relative z-10 mask-[image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
+            hasUpdatedSwiper && 'swiper-updated',
             className
           )}
         >

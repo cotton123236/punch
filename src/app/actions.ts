@@ -100,61 +100,7 @@ export async function unsubscribeUser(endpoint: string) {
   }
 }
 
-export async function sendNotificationToAll(message: string) {
-  try {
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: `${sheetName}!A:G`
-    })
-
-    const rows = res.data.values || []
-    if (rows.length <= 1) {
-      return { success: false, error: 'No subscriptions found' }
-    }
-
-    const notifications: Array<Promise<unknown>> = []
-
-    // 從第 2 行開始 (因為第 1 行是表頭)
-    for (let i = 1; i < rows.length; i++) {
-      const [endpoint, expirationTime, startTime, endTime, keys_auth, keys_p256dh] = rows[i]
-
-      const sub = {
-        endpoint,
-        expirationTime: expirationTime || null,
-        keys: {
-          auth: keys_auth,
-          p256dh: keys_p256dh
-        }
-      }
-
-      notifications.push(
-        webpush
-          .sendNotification(
-            sub,
-            JSON.stringify({
-              title: 'Punch Notification',
-              body: message || "It's time to punch in or out.",
-              icon: '/images/appicon-192x192.png'
-            })
-          )
-          .catch(async (err) => {
-            console.error(`Failed for ${endpoint}`, err)
-            if (err.statusCode === 410 || err.statusCode === 404) {
-              await unsubscribeUser(endpoint)
-            }
-          })
-      )
-    }
-
-    await Promise.allSettled(notifications)
-    return { success: true }
-  } catch (err) {
-    console.error('Error sending notification:', err)
-    return { success: false, error: 'Failed to send notification' }
-  }
-}
-
-export async function sendNotification(subscription: PushSubscription, message?: string) {
+export async function sendNotification(subscription: PushSubscription, data?: { title: string; body: string }) {
   if (!subscription) {
     throw new Error('No subscription available')
   }
@@ -163,14 +109,85 @@ export async function sendNotification(subscription: PushSubscription, message?:
     await webpush.sendNotification(
       subscription,
       JSON.stringify({
-        title: 'Punch Notification',
-        body: message || "It's time to punch in or out.",
-        icon: '/images/appicon-192x192.png'
+        title: data?.title || 'Punch Notification',
+        body: data?.body || "It's time to punch in or out."
       })
     )
     return { success: true }
   } catch (error) {
     console.error('Error sending push notification:', error)
     return { success: false, error: 'Failed to send notification' }
+  }
+}
+
+export async function sendScheduledNotifications() {
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEET_ID!,
+      range: `${sheetName}!A:G`
+    })
+
+    const rows = res.data.values || []
+    if (rows.length <= 1) {
+      return { success: true, message: 'No subscriptions found' }
+    }
+
+    const notifications: Array<Promise<unknown>> = []
+    // 建立一個 UTC+8 時區的當前時間
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    // 從第 2 行開始 (因為第 1 行是表頭)
+    for (let i = 1; i < rows.length; i++) {
+      const [endpoint, expirationTime, startTime, endTime, keys_auth, keys_p256dh] = rows[i]
+
+      const [startHour, startMinute] = startTime.split(':').map(Number)
+      const userStartMinutes = startHour * 60 + startMinute
+
+      const [endHour, endMinute] = endTime.split(':').map(Number)
+      const userEndMinutes = endHour * 60 + endMinute
+
+      const hitStartTime = currentMinutes >= userStartMinutes && currentMinutes < userStartMinutes + 5
+      const hitEndTime = currentMinutes >= userEndMinutes && currentMinutes < userEndMinutes + 5
+
+      if (hitStartTime || hitEndTime) {
+        const sub = {
+          endpoint,
+          expirationTime: expirationTime || null,
+          keys: { auth: keys_auth, p256dh: keys_p256dh }
+        }
+
+        const message = hitStartTime ? '該打卡上班了！' : '別忘了打卡下班！'
+
+        notifications.push(
+          webpush
+            .sendNotification(
+              sub,
+              JSON.stringify({
+                title: '打卡提醒',
+                body: message
+              })
+            )
+            .catch(async (err) => {
+              console.error(`Failed for ${endpoint}`, err)
+              if (err.statusCode === 410 || err.statusCode === 404) {
+                await unsubscribeUser(endpoint)
+              }
+            })
+        )
+      }
+    }
+
+    if (notifications.length > 0) {
+      const results = await Promise.allSettled(notifications)
+      console.log('Sent scheduled notifications:', results)
+      return { success: true, results }
+    }
+
+    return { success: true, message: 'No notifications to send at this time.' }
+  } catch (err) {
+    console.error('Error sending scheduled notification:', err)
+    // 重新拋出錯誤，讓 API Route 捕捉
+    throw new Error('Failed to send scheduled notification')
   }
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence, cubicBezier } from 'motion/react'
-import { useAtom, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { RESET } from 'jotai/utils'
 import {
   userTokenAtom,
@@ -13,9 +13,11 @@ import {
   deviceIdAtom,
   employeeInfoAtom,
   monthDetailAtom,
-  addressListAtom
+  addressListAtom,
+  nicknameAtom
 } from '@/store/atoms'
 import TextGenerateEffect from '@/components/aceternity/TextGenerateEffect'
+import { cn } from '@/lib/utils'
 
 export default function LandingWelcome({
   ref,
@@ -33,9 +35,8 @@ export default function LandingWelcome({
   const setMonthDetail = useSetAtom(monthDetailAtom)
   const setAddressList = useSetAtom(addressListAtom)
   const [employeeInfo, setEmployeeInfo] = useAtom(employeeInfoAtom)
-  const time = new Date().getHours()
-  const timeString = time < 12 ? 'morning' : time < 18 ? 'afternoon' : 'evening'
-  const welcomeWords = `Good ${timeString} ${employeeInfo!.name}.\nYou have nothing\nscheduled for today\nEnjoy your day!`
+  const nickname = useAtomValue(nicknameAtom)
+  const [welcomeWords, setWelcomeWords] = useState<string>('')
 
   const handleSignOut = () => {
     setUserToken(RESET)
@@ -49,12 +50,45 @@ export default function LandingWelcome({
     setEmployeeInfo(null)
   }
 
+  useEffect(() => {
+    const name = nickname || employeeInfo?.name
+    if (!name) return
+
+    const date = new Date()
+    const time = date.getHours()
+    const day = date.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+    const timeString = time < 12 ? 'morning' : time < 18 ? 'afternoon' : 'evening'
+    let specificMessage = ''
+
+    switch (day) {
+      case 0: // Sunday
+      case 6: // Saturday
+        specificMessage = 'Relax and recharge!\nEnjoy your weekend!'
+        break
+      case 1: // Monday
+        specificMessage = "Hello Monday!\nLet's make it\na great week!"
+        break
+      case 5: // Friday
+        specificMessage = 'Happy Friday!\nJust one more push!'
+        break
+      default: // Tuesday, Wednesday, Thursday
+        specificMessage = 'Hope you have\na productive day!'
+        break
+    }
+
+    setWelcomeWords(`Good ${timeString}, ${name}.\n${specificMessage}`)
+  }, [nickname, employeeInfo])
+
   return (
     <div
       ref={ref}
       className={cn('relative w-full', className)}
     >
-      <TextGenerateEffect words={welcomeWords} />
+      <TextGenerateEffect
+        key={welcomeWords}
+        words={welcomeWords}
+      />
       <AnimatePresence>
         <motion.div className="absolute top-[calc(100%+2.5rem)] left-0 overflow-hidden">
           <AnimatePresence propagate>

@@ -226,3 +226,8 @@
 @utility animate-ripple-secondary {
   animation: ripple-secondary var(--duration-ripple, 2s) var(--ease-in-out-sm) var(--delay-ripple, 0s) infinite;
 }
+
+.swiper-updated .swiper-slide:not(.swiper-slide-active) span {
+  opacity: 0.1;
+  transform: scale(0.8);
+}

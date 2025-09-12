@@ -16,7 +16,8 @@ import {
   punchThemeActiveIndexAtom,
   isInClockAtom,
   isPunchingAtom,
-  isDraggingAtom
+  isDraggingAtom,
+  nicknameAtom
 } from '@/store/atoms'
 import type { EmployeeInfoResponse } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
@@ -121,6 +122,7 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   const { nodes, materials } = useGLTF('/models/tag.glb')
   const texture = useTexture('/models/band.png')
   const employeeInfo = useAtomValue(employeeInfoAtom)
+  const nickname = useAtomValue(nicknameAtom)
   const theme = useAtomValue(themeAtom)
   const punchTheme = useAtomValue(punchThemeAtom)
   const punchThemeActiveIndex = useAtomValue(punchThemeActiveIndexAtom)
@@ -130,10 +132,10 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   const [cardTexture, setCardTexture] = useState<CanvasTexture>()
 
   useEffect(() => {
-    createStyledTextTexture(employeeInfo, theme, punchTheme[punchThemeActiveIndex]).then((texture) => {
+    createStyledTextTexture(employeeInfo, nickname, theme, punchTheme[punchThemeActiveIndex]).then((texture) => {
       setCardTexture(texture)
     })
-  }, [employeeInfo, theme, punchTheme, punchThemeActiveIndex])
+  }, [employeeInfo, nickname, theme, punchTheme, punchThemeActiveIndex])
 
   const cardMesh = nodes.card as Mesh<BufferGeometry>
   const clipMesh = nodes.clip as Mesh<BufferGeometry>
@@ -364,6 +366,7 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
 
 const createStyledTextTexture = async (
   employeeInfo: EmployeeInfoResponse | null,
+  nickname: string,
   theme: string,
   punchTheme: { primary: string; secondary: string }
 ) => {
@@ -438,11 +441,11 @@ const createStyledTextTexture = async (
   }
 
   const drawName = () => {
-    context.font = `500 72px ${fontFamily}`
+    context.font = '500 72px Alice, Noto Sans TC, sans-serif'
     context.fillStyle = primaryTextColor
     context.textAlign = 'left'
     context.textBaseline = 'bottom'
-    context.fillText(employeeInfo?.name || '姓名', bleed, cardHeight - bleed)
+    context.fillText(nickname || employeeInfo?.name || '姓名', bleed, cardHeight - bleed)
   }
 
   const drawDepName = () => {
@@ -458,7 +461,7 @@ const createStyledTextTexture = async (
   }
 
   const drawEmpNo = () => {
-    context.font = `400 14px ${fontFamily}`
+    context.font = `400 16px ${fontFamily}`
     context.fillStyle = secondaryTextColor
     context.textAlign = 'left'
     context.textBaseline = 'bottom'
@@ -466,7 +469,7 @@ const createStyledTextTexture = async (
   }
 
   const drawHireDate = () => {
-    context.font = `400 14px ${fontFamily}`
+    context.font = `400 16px ${fontFamily}`
     context.fillStyle = secondaryTextColor
     context.textAlign = 'right'
     context.textBaseline = 'bottom'
