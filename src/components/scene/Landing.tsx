@@ -3,7 +3,13 @@
 import { motion, cubicBezier } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { loginRefreshTokenAtom, employeeInfoAtom, isHydratedAtom, isSettingsOpenAtom } from '@/store/atoms'
+import {
+  loginRefreshTokenAtom,
+  employeeInfoAtom,
+  isHydratedAtom,
+  isSettingsOpenAtom,
+  nicknameAtom
+} from '@/store/atoms'
 import { cn } from '@/lib/utils'
 import Sunrise from '@/components/ui/Sunrise'
 import LandingLogin from './LandingLogin'
@@ -21,15 +27,18 @@ export default function Landing({
   const employeeInfo = useAtomValue(employeeInfoAtom)
   const isHydrated = useAtomValue(isHydratedAtom)
   const loginRefreshToken = useAtomValue(loginRefreshTokenAtom)
+  const nickname = useAtomValue(nicknameAtom)
   const childrenRef = useRef<HTMLDivElement>(null!)
   const [childrenHeight, setChildrenHeight] = useState<number>(0)
   const setIsSettingsOpen = useSetAtom(isSettingsOpenAtom)
 
   useEffect(() => {
     if (childrenRef.current) {
-      setChildrenHeight(childrenRef.current.getBoundingClientRect().height)
+      setTimeout(() => {
+        setChildrenHeight(childrenRef.current.getBoundingClientRect().height)
+      }, 50)
     }
-  }, [isHydrated, childrenRef, employeeInfo])
+  }, [isHydrated, childrenRef, employeeInfo, nickname])
 
   return (
     <div

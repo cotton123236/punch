@@ -217,19 +217,23 @@ export default function Settings({ className }: { className?: string }) {
                   }}
                 />
               </div>
+              {/* notification */}
+              <div className="mt-6 flex items-center justify-between gap-4">
+                <span>Notification</span>
+                {isSupported ? (
+                  <Switch
+                    checked={isNotificationEnabled}
+                    onChange={(value: boolean) => {
+                      setIsNotificationEnabled(value)
+                    }}
+                  />
+                ) : (
+                  <span className="text-secondary-foreground">Not supported</span>
+                )}
+              </div>
               {/* push notification */}
               {isSupported && (
                 <>
-                  {/* notification */}
-                  <div className="mt-6 flex items-center justify-between gap-4">
-                    <span>Notification</span>
-                    <Switch
-                      checked={isNotificationEnabled}
-                      onChange={(value: boolean) => {
-                        setIsNotificationEnabled(value)
-                      }}
-                    />
-                  </div>
                   {/* notification time */}
                   <div
                     className={cn(
