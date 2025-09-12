@@ -92,6 +92,16 @@ export const deviceSizeAtom = atom<'sm' | 'md' | 'lg'>((get) => {
   return 'lg'
 })
 
+export const isSettingsOpenAtom = atom<boolean>(false)
+
+export const nicknameAtom = atomWithStorage<string>('punch-nickname', '')
+
+export const isNotificationEnabledAtom = atomWithStorage<boolean>('punch-notification', false)
+
+export const notificationStartTimeAtom = atomWithStorage<string>('punch-notificationStartTime', '09:30')
+
+export const notificationEndTimeAtom = atomWithStorage<string>('punch-notificationEndTime', '18:30')
+
 export const punchThemeAtom = atom<{ primary: string; secondary: string }[]>([
   { primary: '#ea7c60', secondary: '#f7bfc7' },
   { primary: '#0f7989', secondary: '#c3c5e7' },

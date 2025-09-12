@@ -3,13 +3,7 @@
 import { motion, cubicBezier } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
-import {
-  loginRefreshTokenAtom,
-  employeeInfoAtom,
-  isHydratedAtom,
-  punchThemeAtom,
-  punchThemeActiveIndexAtom
-} from '@/store/atoms'
+import { loginRefreshTokenAtom, employeeInfoAtom, isHydratedAtom, isSettingsOpenAtom } from '@/store/atoms'
 import { cn } from '@/lib/utils'
 import Sunrise from '@/components/ui/Sunrise'
 import LandingLogin from './LandingLogin'
@@ -29,12 +23,7 @@ export default function Landing({
   const loginRefreshToken = useAtomValue(loginRefreshTokenAtom)
   const childrenRef = useRef<HTMLDivElement>(null!)
   const [childrenHeight, setChildrenHeight] = useState<number>(0)
-  const punchTheme = useAtomValue(punchThemeAtom)
-  const setPunchThemeActiveIndex = useSetAtom(punchThemeActiveIndexAtom)
-
-  const handlePunchTheme = () => {
-    setPunchThemeActiveIndex((prev) => (prev + 1) % punchTheme.length)
-  }
+  const setIsSettingsOpen = useSetAtom(isSettingsOpenAtom)
 
   useEffect(() => {
     if (childrenRef.current) {
@@ -56,7 +45,7 @@ export default function Landing({
       >
         <Sunrise
           className="ease-in-out-sm cursor-pointer duration-700 hover:rotate-45"
-          onClick={handlePunchTheme}
+          onClick={() => setIsSettingsOpen(true)}
         />
         {isHydrated && (
           <motion.div

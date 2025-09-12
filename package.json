@@ -16,6 +16,8 @@
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "google-auth-library": "^10.3.0",
+    "googleapis": "^159.0.0",
     "jotai": "^2.13.1",
     "leva": "^0.10.0",
     "liquid-glass-react": "^1.1.1",
@@ -29,7 +31,8 @@
     "sonner": "^2.0.7",
     "swiper": "^11.2.10",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.179.1"
+    "three": "^0.179.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -38,6 +41,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.179.0",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
     "prettier": "^3.6.2",

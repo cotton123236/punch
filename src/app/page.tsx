@@ -16,7 +16,8 @@ import {
   globalLoadingAtom,
   errorMessageAtom,
   successMessageAtom,
-  windowWidthAtom
+  windowWidthAtom,
+  isSettingsOpenAtom
 } from '@/store/atoms'
 import { useAuth, useData } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
@@ -26,6 +27,7 @@ import SceneLanding from '@/components/scene/Landing'
 import ScenePunch from '@/components/scene/Punch'
 import SceneCalendar from '@/components/scene/Calendar'
 import Nav from '@/components/ui/Nav'
+import Settings from '@/components/ui/Settings'
 
 export default function Home() {
   const { login } = useAuth()
@@ -46,6 +48,7 @@ export default function Home() {
   const calendarRef = useRef<HTMLDivElement>(null!)
   const punchTheme = useAtomValue(punchThemeAtom)
   const punchThemeActiveIndex = useAtomValue(punchThemeActiveIndexAtom)
+  const isSettingsOpen = useAtomValue(isSettingsOpenAtom)
   const [errorMessages, setErrorMessage] = useAtom(errorMessageAtom)
   const [successMessages, setSuccessMessage] = useAtom(successMessageAtom)
 
@@ -158,8 +161,13 @@ export default function Home() {
 
   return (
     <>
-      <div className="h-dvh w-dvw">
-        <Loader />
+      <Loader />
+      <div
+        className={cn(
+          'ease-in-out-lg h-dvh w-dvw origin-top transition-[filter,opacity,scale] duration-800',
+          isSettingsOpen && 'scale-90 opacity-30 blur-sm lg:scale-95'
+        )}
+      >
         <div
           ref={sceneScrollerRef}
           className="no-scrollbar scene-scroller relative z-[1] flex h-full w-full snap-x snap-mandatory overflow-x-auto"
@@ -190,6 +198,7 @@ export default function Home() {
         </div>
         {isAnimated && <Nav />}
       </div>
+      <Settings />
       <Toaster
         position="top-center"
         offset="5vh"

@@ -91,7 +91,7 @@ const CalendarItem = ({
           ) : null}
         </div>
         {isAbnormal && (
-          <div className="bg-sunrise absolute top-1/2 right-0 h-[.375rem] w-[.375rem] -translate-y-1/2 rounded-full duration-300 group-hover:translate-x-2 group-hover:opacity-0"></div>
+          <div className="bg-sunrise absolute top-1/2 -left-6 h-[.375rem] w-[.375rem] -translate-y-1/2 rounded-full"></div>
         )}
       </motion.div>
     </div>
