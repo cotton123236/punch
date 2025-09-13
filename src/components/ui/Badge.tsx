@@ -384,6 +384,10 @@ const createStyledTextTexture = async (
   const backgroundColor = theme === 'light' ? '#ffffff' : '#1e1e1e'
   const primaryTextColor = theme === 'light' ? '#181818' : '#d1d1d1'
   const secondaryTextColor = theme === 'light' ? '#999999' : '#777777'
+  const nameFont = '500 72px Alice, Noto Sans TC, sans-serif'
+  const nameText = nickname || employeeInfo?.name || '姓名'
+  const empNoFont = `400 16px ${fontFamily}`
+  const empNoText = employeeInfo?.empNo || 'A00'
 
   // 載入背景圖片
   const loadBackgroundImage = (): Promise<HTMLImageElement> => {
@@ -441,31 +445,49 @@ const createStyledTextTexture = async (
   }
 
   const drawName = () => {
-    context.font = '500 72px Alice, Noto Sans TC, sans-serif'
+    context.font = nameFont
     context.fillStyle = primaryTextColor
     context.textAlign = 'left'
     context.textBaseline = 'bottom'
-    context.fillText(nickname || employeeInfo?.name || '姓名', bleed, cardHeight - bleed)
+    context.fillText(nameText, bleed, cardHeight - bleed)
   }
 
   const drawDepName = () => {
-    context.font = `400 20px ${fontFamily}`
-    context.fillStyle = secondaryTextColor
-    context.textAlign = 'right'
-    context.textBaseline = 'bottom'
-    context.fillText(
-      (employeeInfo?.depName === '開發' ? 'DEVELOPER' : employeeInfo?.positionName) || '',
-      bleed + 72 * 3 - 4,
-      cardHeight - bleed - 72 - 16
-    )
-  }
+    // 1. Measure Name to find its right edge
+    context.font = '500 72px Alice, Noto Sans TC, sans-serif'
+    const nameWidth = context.measureText(nameText).width
+    const nameRightBoundary = bleed + nameWidth
 
-  const drawEmpNo = () => {
+    // 2. Measure EmpNo to find its "keep out" zone
     context.font = `400 16px ${fontFamily}`
+    const empNoWidth = context.measureText(empNoText).width
+    const safeStartX = bleed + 4 + empNoWidth + 20
+
+    // 3. Measure DepName itself
+    context.font = `400 20px ${fontFamily}`
+    const depNameText = (employeeInfo?.depName === '開發' ? 'DEVELOPER' : employeeInfo?.positionName) || ''
+    const depNameWidth = context.measureText(depNameText).width
+
+    // 4. Calculate the desired start position if we were to right-align with the name
+    const rightAlignedStartX = nameRightBoundary - depNameWidth
+
+    // 5. The final X position is the maximum of the two possible start positions
+    const finalDepNameX = Math.max(rightAlignedStartX, safeStartX)
+
+    // 6. Draw the text using the calculated position and textAlign: 'left'
     context.fillStyle = secondaryTextColor
     context.textAlign = 'left'
     context.textBaseline = 'bottom'
-    context.fillText(employeeInfo?.empNo || 'A00', bleed + 4, cardHeight - bleed - 72 - 20)
+
+    context.fillText(depNameText, finalDepNameX, cardHeight - bleed - 72 - 16)
+  }
+
+  const drawEmpNo = () => {
+    context.font = empNoFont
+    context.fillStyle = secondaryTextColor
+    context.textAlign = 'left'
+    context.textBaseline = 'bottom'
+    context.fillText(empNoText, bleed + 4, cardHeight - bleed - 72 - 16)
   }
 
   const drawHireDate = () => {

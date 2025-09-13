@@ -263,7 +263,7 @@ export default function Settings({ className }: { className?: string }) {
                   {/* notification time */}
                   <div
                     className={cn(
-                      'ease-in-out-md grid grid-rows-[0fr] overflow-hidden duration-600',
+                      'ease-in-out-lg grid grid-rows-[0fr] overflow-hidden duration-500',
                       isNotificationEnabled && 'mt-6 grid-rows-[1fr]'
                     )}
                   >

@@ -49,7 +49,7 @@ export default function Landing({
       <div
         className={cn(
           'flex w-full flex-col gap-10 transition-[max-width] duration-500',
-          !loginRefreshToken ? 'max-w-90' : 'max-w-65'
+          !loginRefreshToken ? 'max-w-90' : 'max-w-68'
         )}
       >
         <Sunrise
