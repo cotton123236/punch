@@ -44,6 +44,11 @@ export default function Settings({ className }: { className?: string }) {
   const setPunchThemeActiveIndex = useSetAtom(punchThemeActiveIndexAtom)
   const [isSettingsOpen, setIsSettingsOpen] = useAtom(isSettingsOpenAtom)
   const hasOpened = useRef(false)
+  const reservedData = useRef<{
+    isNotificationEnabled: boolean
+    notificationStartTime: string
+    notificationEndTime: string
+  } | null>(null)
 
   // push notification
   const [isSupported, setIsSupported] = useState(false)
@@ -85,6 +90,11 @@ export default function Settings({ className }: { className?: string }) {
   useEffect(() => {
     if (isSettingsOpen) {
       hasOpened.current = true
+      reservedData.current = {
+        isNotificationEnabled,
+        notificationStartTime,
+        notificationEndTime
+      }
     }
     if (!isSettingsOpen && hasOpened.current) {
       setNickname(inputNickname)
@@ -105,7 +115,7 @@ export default function Settings({ className }: { className?: string }) {
   }
 
   // subscribe to push
-  const subscribeToPush = async (): Promise<PushSubscription | null> => {
+  const subscribeToPush = async (): Promise<{ sub: PushSubscription; success: boolean; message?: string } | null> => {
     const registration = await navigator.serviceWorker.ready
 
     const permission = await Notification.requestPermission()
@@ -122,12 +132,16 @@ export default function Settings({ className }: { className?: string }) {
 
       setSubscription(sub)
       const serializedSub = JSON.parse(JSON.stringify(sub))
-      await subscribeUser({
+      const res = await subscribeUser({
         sub: serializedSub,
         startTime: inputNotificationStartTime,
         endTime: inputNotificationEndTime
       })
-      return serializedSub
+      if (res.success) {
+        return { sub: serializedSub, ...res }
+      } else {
+        throw new Error(res.message || 'Failed to subscribe')
+      }
     } catch (err) {
       console.error('Failed to subscribe:', err)
       return null
@@ -160,13 +174,25 @@ export default function Settings({ className }: { className?: string }) {
         className="absolute inset-0 z-10"
         onClick={async () => {
           setIsSettingsOpen(false)
+
+          // check if notification should be updated
+          if (
+            reservedData.current?.isNotificationEnabled === isNotificationEnabled &&
+            reservedData.current?.notificationStartTime === inputNotificationStartTime &&
+            reservedData.current?.notificationEndTime === inputNotificationEndTime
+          ) {
+            return
+          }
+
           if (isNotificationEnabled) {
-            const newSubscription = await subscribeToPush()
-            if (newSubscription) {
-              const subscription = newSubscription as unknown as WebPushSubscription
+            const res = await subscribeToPush()
+            if (res?.success) {
+              const subscription = res.sub as unknown as WebPushSubscription
+              const title = res.message?.includes('updated') ? 'Reminder Updated!' : 'Reminder Enabled!'
+              const body = res.message?.includes('updated') ? '已成功更新打卡提醒通知！' : '已成功開啟打卡提醒通知！'
               await sendNotification(subscription, {
-                title: '打卡提醒開啟',
-                body: '已成功開啟打卡提醒，將在工作日設定時間內收到通知！'
+                title,
+                body
               })
             } else {
               setIsNotificationEnabled(false)
@@ -223,7 +249,7 @@ export default function Settings({ className }: { className?: string }) {
                 {isSupported ? (
                   <Switch
                     checked={isNotificationEnabled}
-                    onChange={(value: boolean) => {
+                    onChange={async (value: boolean) => {
                       setIsNotificationEnabled(value)
                     }}
                   />
@@ -237,7 +263,7 @@ export default function Settings({ className }: { className?: string }) {
                   {/* notification time */}
                   <div
                     className={cn(
-                      'ease-in-out-lg grid grid-rows-[0fr] overflow-hidden duration-800',
+                      'ease-in-out-md grid grid-rows-[0fr] overflow-hidden duration-600',
                       isNotificationEnabled && 'mt-6 grid-rows-[1fr]'
                     )}
                   >

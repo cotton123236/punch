@@ -31,32 +31,58 @@ const sheets = google.sheets({ version: 'v4', auth })
 
 // === Server Actions ===
 
-export async function subscribeUser(data: SubscribeUserProps) {
+export async function subscribeUser(data: SubscribeUserProps): Promise<{ success: boolean; message?: string }> {
   try {
-    const createdAt = new Date().toISOString()
-    const row = [
+    // First, get all existing subscriptions to check for duplicates
+    const getRes = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:G`
+    })
+
+    const rows = getRes.data.values || []
+    const endpointToFind = data.sub.endpoint
+    const existingRowIndex = rows.findIndex((row) => row.length > 0 && row[0] === endpointToFind)
+
+    // Prepare the new row data
+    const newRow = [
       data.sub.endpoint,
       data.sub.expirationTime || '',
       data.startTime,
       data.endTime,
       data.sub.keys?.auth || '',
       data.sub.keys?.p256dh || '',
-      createdAt
+      new Date().toISOString() // Use new date for both update and create
     ]
 
-    console.log(row)
+    if (existingRowIndex !== -1) {
+      // --- UPDATE EXISTING ROW ---
+      // The row was found, so we update it.
+      // Sheet rows are 1-based, and findIndex is 0-based.
+      const targetRow = existingRowIndex + 1
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${sheetName}!A:G`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [row] }
-    })
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A${targetRow}:G${targetRow}`, // Specify the exact row range to update
+        valueInputOption: 'RAW',
+        requestBody: { values: [newRow] }
+      })
 
-    return { success: true }
+      return { success: true, message: 'Subscription updated' }
+    } else {
+      // --- APPEND NEW ROW ---
+      // The endpoint was not found, so we append a new row.
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: `${sheetName}!A:G`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [newRow] }
+      })
+
+      return { success: true, message: 'Subscription created' }
+    }
   } catch (err) {
-    console.error('Error saving subscription:', err)
-    return { success: false, error: 'Failed to save subscription' }
+    console.error('Error in subscribeUser (upsert logic):', err)
+    return { success: false, message: 'Failed to save or update subscription' }
   }
 }
 
