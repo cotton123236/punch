@@ -5,6 +5,8 @@ import type { PushSubscription as WebPushSubscription } from 'web-push'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { subscribeUser, unsubscribeUser, sendNotification } from '@/app/actions'
 import {
+  isVisitorModeAtom,
+  visitorNicknameAtom,
   isSettingsOpenAtom,
   employeeInfoAtom,
   nicknameAtom,
@@ -32,12 +34,17 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function Settings({ className }: { className?: string }) {
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
+  const [visitorNickname, setVisitorNickname] = useAtom(visitorNicknameAtom)
+
   const employeeInfo = useAtomValue(employeeInfoAtom)
   const [nickname, setNickname] = useAtom(nicknameAtom)
   const [isNotificationEnabled, setIsNotificationEnabled] = useAtom(isNotificationEnabledAtom)
   const [notificationStartTime, setNotificationStartTime] = useAtom(notificationStartTimeAtom)
   const [notificationEndTime, setNotificationEndTime] = useAtom(notificationEndTimeAtom)
-  const [inputNickname, setInputNickname] = useState<string>(nickname || employeeInfo?.name || '')
+
+  const initialNickname = isVisitorMode ? visitorNickname : nickname || employeeInfo?.name
+  const [inputNickname, setInputNickname] = useState<string>(initialNickname || '')
   const [inputNotificationStartTime, setInputNotificationStartTime] = useState<string>(notificationStartTime)
   const [inputNotificationEndTime, setInputNotificationEndTime] = useState<string>(notificationEndTime)
   const punchTheme = useAtomValue(punchThemeAtom)
@@ -68,8 +75,11 @@ export default function Settings({ className }: { className?: string }) {
     if (employeeInfo && !nickname) {
       setInputNickname(employeeInfo.name)
     }
-    if (nickname) {
+    if (!isVisitorMode && nickname) {
       setInputNickname(nickname)
+    }
+    if (isVisitorMode && visitorNickname) {
+      setInputNickname(visitorNickname)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeInfo])
@@ -97,9 +107,13 @@ export default function Settings({ className }: { className?: string }) {
       }
     }
     if (!isSettingsOpen && hasOpened.current) {
-      setNickname(inputNickname)
-      setNotificationStartTime(inputNotificationStartTime)
-      setNotificationEndTime(inputNotificationEndTime)
+      if (isVisitorMode) {
+        setVisitorNickname(inputNickname)
+      } else {
+        setNickname(inputNickname)
+        setNotificationStartTime(inputNotificationStartTime)
+        setNotificationEndTime(inputNotificationEndTime)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSettingsOpen])
@@ -177,9 +191,10 @@ export default function Settings({ className }: { className?: string }) {
 
           // check if notification should be updated
           if (
-            reservedData.current?.isNotificationEnabled === isNotificationEnabled &&
-            reservedData.current?.notificationStartTime === inputNotificationStartTime &&
-            reservedData.current?.notificationEndTime === inputNotificationEndTime
+            isVisitorMode ||
+            (reservedData.current?.isNotificationEnabled === isNotificationEnabled &&
+              reservedData.current?.notificationStartTime === inputNotificationStartTime &&
+              reservedData.current?.notificationEndTime === inputNotificationEndTime)
           ) {
             return
           }
@@ -205,7 +220,7 @@ export default function Settings({ className }: { className?: string }) {
       <div
         className={cn(
           'ease-in-out-lg absolute -bottom-9 left-0 z-20 w-full duration-800 md:bottom-12 md:left-1/2 md:w-[90%] md:max-w-md md:-translate-x-1/2',
-          !isSettingsOpen && 'translate-y-full scale-120 md:translate-y-[calc(100%+3rem)]'
+          !isSettingsOpen && 'translate-y-[110%] scale-120 md:translate-y-[calc(110%+3rem)]'
         )}
       >
         <LiquidGlass

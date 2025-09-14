@@ -13,6 +13,7 @@ import type {
 import { useAtom, useSetAtom, useAtomValue } from 'jotai'
 import { useCallback } from 'react'
 import { apiClient } from '@/lib/api/client'
+import { mockEmployeeInfo, mockAddressList, mockMonthDetail } from '@/lib/api/mock'
 import {
   type AddressListWithId,
   userTokenAtom,
@@ -27,7 +28,8 @@ import {
   addressListAtom,
   currentAddressIdAtom,
   monthDetailAtom,
-  errorMessageAtom
+  errorMessageAtom,
+  isVisitorModeAtom
 } from '@/store/atoms'
 
 export const useBackendErrorHandler = () => {
@@ -191,6 +193,7 @@ export const useData = () => {
   const cid = useAtomValue(cidAtom)
   const pid = useAtomValue(pidAtom)
   const deviceId = useAtomValue(deviceIdAtom)
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
   const setAddressList = useSetAtom(addressListAtom)
   const setEmployeeInfo = useSetAtom(employeeInfoAtom)
   const setMonthDetail = useSetAtom(monthDetailAtom)
@@ -212,6 +215,10 @@ export const useData = () => {
   }, [accessToken, pid, errorHandler])
 
   const getEmployeeInfo = useCallback(async () => {
+    if (isVisitorMode) {
+      setEmployeeInfo(mockEmployeeInfo)
+      return
+    }
     try {
       const employeeInfoResponse = await postEmployeeInfo()
       setEmployeeInfo(employeeInfoResponse)
@@ -219,7 +226,7 @@ export const useData = () => {
       errorHandler.backend(error, 'getEmployeeInfo')
       throw error
     }
-  }, [postEmployeeInfo, errorHandler, setEmployeeInfo])
+  }, [postEmployeeInfo, errorHandler, setEmployeeInfo, isVisitorMode])
 
   // address list
   const postCardSetting = useCallback(async (): Promise<CardSettingResponse['data']> => {
@@ -246,6 +253,10 @@ export const useData = () => {
   }, [accessToken, cid, pid, deviceId, errorHandler])
 
   const getAddressList = useCallback(async () => {
+    if (isVisitorMode) {
+      setAddressList(mockAddressList)
+      return
+    }
     try {
       const cardSettingResponse = await postCardSetting()
       const addressList = cardSettingResponse[0]?.addressList ?? []
@@ -270,7 +281,7 @@ export const useData = () => {
       errorHandler.backend(error, 'getAddressList')
       throw error
     }
-  }, [postCardSetting, errorHandler, setAddressList])
+  }, [postCardSetting, errorHandler, setAddressList, isVisitorMode])
 
   // month detail
   const postMonthDetail = useCallback(async (): Promise<MonthDetailResponse['data']> => {
@@ -302,6 +313,10 @@ export const useData = () => {
   }, [accessToken, pid, cid, errorHandler])
 
   const getMonthDetail = useCallback(async () => {
+    if (isVisitorMode) {
+      setMonthDetail(mockMonthDetail)
+      return
+    }
     try {
       const monthDetailResponse = await postMonthDetail()
       setMonthDetail(monthDetailResponse)
@@ -309,7 +324,7 @@ export const useData = () => {
       errorHandler.backend(error, 'getMonthDetail')
       throw error
     }
-  }, [postMonthDetail, errorHandler, setMonthDetail])
+  }, [postMonthDetail, errorHandler, setMonthDetail, isVisitorMode])
 
   return {
     getEmployeeInfo,

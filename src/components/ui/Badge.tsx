@@ -10,6 +10,8 @@ import { BallCollider, CuboidCollider, Physics, RigidBody, useRopeJoint, useSphe
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
+  isVisitorModeAtom,
+  visitorNicknameAtom,
   employeeInfoAtom,
   themeAtom,
   punchThemeAtom,
@@ -121,6 +123,10 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   }
   const { nodes, materials } = useGLTF('/models/tag.glb')
   const texture = useTexture('/models/band.png')
+
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
+  const visitorNickname = useAtomValue(visitorNicknameAtom)
+
   const employeeInfo = useAtomValue(employeeInfoAtom)
   const nickname = useAtomValue(nicknameAtom)
   const theme = useAtomValue(themeAtom)
@@ -132,10 +138,15 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   const [cardTexture, setCardTexture] = useState<CanvasTexture>()
 
   useEffect(() => {
-    createStyledTextTexture(employeeInfo, nickname, theme, punchTheme[punchThemeActiveIndex]).then((texture) => {
+    createStyledTextTexture(
+      employeeInfo,
+      isVisitorMode ? visitorNickname : nickname,
+      theme,
+      punchTheme[punchThemeActiveIndex]
+    ).then((texture) => {
       setCardTexture(texture)
     })
-  }, [employeeInfo, nickname, theme, punchTheme, punchThemeActiveIndex])
+  }, [isVisitorMode, visitorNickname, employeeInfo, nickname, theme, punchTheme, punchThemeActiveIndex])
 
   const cardMesh = nodes.card as Mesh<BufferGeometry>
   const clipMesh = nodes.clip as Mesh<BufferGeometry>

@@ -5,6 +5,8 @@ import { motion, AnimatePresence, cubicBezier } from 'motion/react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { RESET } from 'jotai/utils'
 import {
+  isVisitorModeAtom,
+  visitorNicknameAtom,
   userTokenAtom,
   loginRefreshTokenAtom,
   accessTokenAtom,
@@ -27,6 +29,9 @@ export default function LandingWelcome({
   ref?: React.RefObject<HTMLDivElement>
   className?: string
 }) {
+  const [isVisitorMode, setIsVisitorMode] = useAtom(isVisitorModeAtom)
+  const visitorNickname = useAtomValue(visitorNicknameAtom)
+
   const setUserToken = useSetAtom(userTokenAtom)
   const setLoginRefreshToken = useSetAtom(loginRefreshTokenAtom)
   const setAccessToken = useSetAtom(accessTokenAtom)
@@ -50,10 +55,12 @@ export default function LandingWelcome({
     setMonthDetail(null)
     setAddressList(null)
     setEmployeeInfo(null)
+
+    setIsVisitorMode(false)
   }
 
   useEffect(() => {
-    const name = nickname || employeeInfo?.name
+    const name = isVisitorMode ? visitorNickname : nickname || employeeInfo?.name
     if (!name) return
 
     const hours = time.getHours()
@@ -79,7 +86,7 @@ export default function LandingWelcome({
     }
 
     setWelcomeWords(`Good ${timeString}, ${name}.\n${specificMessage}`)
-  }, [nickname, employeeInfo, time])
+  }, [isVisitorMode, visitorNickname, nickname, employeeInfo, time])
 
   return (
     <div

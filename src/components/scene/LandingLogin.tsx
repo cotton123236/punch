@@ -3,7 +3,14 @@
 import { motion, AnimatePresence, cubicBezier } from 'motion/react'
 import { useState } from 'react'
 import { useSetAtom, useAtomValue, useAtom } from 'jotai'
-import { loginAtom, isLoginAtom, deviceIdAtom, errorMessageAtom, globalLoadingAtom } from '@/store/atoms'
+import {
+  isVisitorModeAtom,
+  loginAtom,
+  isLoginAtom,
+  deviceIdAtom,
+  errorMessageAtom,
+  globalLoadingAtom
+} from '@/store/atoms'
 import { useAuth } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
 
@@ -14,13 +21,15 @@ export default function LandingLogin({
   ref?: React.RefObject<HTMLDivElement>
   className?: string
 }) {
+  const { login } = useAuth()
+
   const [loginDeviceId, setLoginDeviceId] = useState('')
   const [loginData, setLoginData] = useAtom(loginAtom)
   const isLogin = useAtomValue(isLoginAtom)
   const setDeviceId = useSetAtom(deviceIdAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
   const [globalLoading, setGlobalLoading] = useAtom(globalLoadingAtom)
-  const { login } = useAuth()
+  const setIsVisitorMode = useSetAtom(isVisitorModeAtom)
 
   const elementAnimate = {
     initial: { y: '100%' },
@@ -156,21 +165,39 @@ export default function LandingLogin({
           </AnimatePresence>
         </div>
         <AnimatePresence>
-          <motion.div
-            key="enter"
-            className="flex w-full justify-end overflow-hidden transition-opacity duration-300 has-disabled:opacity-50"
-          >
-            <AnimatePresence propagate>
-              <motion.button
-                className="text-sunrise cursor-pointer text-xl"
-                type="submit"
-                disabled={globalLoading}
-                {...elementAnimate}
-              >
-                Enter
-              </motion.button>
-            </AnimatePresence>
-          </motion.div>
+          {!isLogin && (
+            <motion.div
+              key="enter"
+              className="flex w-full justify-end gap-10 overflow-hidden transition-opacity duration-300 has-disabled:opacity-50"
+            >
+              <AnimatePresence propagate>
+                <motion.button
+                  className="text-sunrise cursor-pointer text-xl opacity-40 grayscale-100"
+                  type="button"
+                  disabled={globalLoading}
+                  {...elementAnimate}
+                  transition={{ duration: 0.8, delay: 0.6, ease: cubicBezier(0.85, 0, 0.15, 1) }}
+                  onClick={() => {
+                    setGlobalLoading(true)
+                    setIsVisitorMode(true)
+                  }}
+                >
+                  Visitor
+                </motion.button>
+              </AnimatePresence>
+              <AnimatePresence propagate>
+                <motion.button
+                  className="text-sunrise cursor-pointer text-xl"
+                  type="submit"
+                  disabled={globalLoading}
+                  {...elementAnimate}
+                  transition={{ duration: 0.8, delay: 0.6, ease: cubicBezier(0.85, 0, 0.15, 1) }}
+                >
+                  Enter
+                </motion.button>
+              </AnimatePresence>
+            </motion.div>
+          )}
         </AnimatePresence>
       </form>
     </div>

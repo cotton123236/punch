@@ -6,6 +6,11 @@ import { atomWithStorage } from 'jotai/utils'
 
 export type AddressListWithId = AddressList & { id: 'company' | 'home' | 'off'; name: string }
 
+// visitor mode
+export const isVisitorModeAtom = atomWithStorage<boolean>('punch-visitor-mode', false)
+
+export const visitorNicknameAtom = atomWithStorage<string>('punch-visitor-nickname', 'Visitor')
+
 // login token for /user/api/token
 export const userTokenAtom = atomWithStorage<string>('punch-refresh_token', '')
 // login refresh token for /prohrm/api/login/refresh
@@ -16,7 +21,7 @@ export const pidAtom = atomWithStorage<string>('punch-pid', '')
 export const deviceIdAtom = atomWithStorage<string>('punch-deviceId', '')
 
 export const isLoginAtom = atom<boolean>(
-  (get) => !!(get(accessTokenAtom) && get(cidAtom) && get(pidAtom) && get(deviceIdAtom))
+  (get) => !!(get(accessTokenAtom) && get(cidAtom) && get(pidAtom) && get(deviceIdAtom)) || get(isVisitorModeAtom)
 )
 
 // 登入資訊

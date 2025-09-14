@@ -161,7 +161,7 @@ export type MonthDetailDataItem = {
   isWorkDay: boolean
   timeEnd: string
   temperature: number
-  weekDay: '星期一' | '星期二' | '星期三' | '星期四' | '星期五' | '星期六' | '星期日'
+  weekDay: string
   timeStart: string
   handleStatus: number
   overAttCardDataId: number

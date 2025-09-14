@@ -4,6 +4,8 @@ import { motion, cubicBezier } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import {
+  isVisitorModeAtom,
+  visitorNicknameAtom,
   loginRefreshTokenAtom,
   employeeInfoAtom,
   isHydratedAtom,
@@ -24,6 +26,9 @@ export default function Landing({
   ref: React.RefObject<HTMLDivElement>
   id: string
 }) {
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
+  const visitorNickname = useAtomValue(visitorNicknameAtom)
+
   const employeeInfo = useAtomValue(employeeInfoAtom)
   const isHydrated = useAtomValue(isHydratedAtom)
   const loginRefreshToken = useAtomValue(loginRefreshTokenAtom)
@@ -38,7 +43,7 @@ export default function Landing({
         setChildrenHeight(childrenRef.current.getBoundingClientRect().height)
       }, 50)
     }
-  }, [isHydrated, childrenRef, employeeInfo, nickname])
+  }, [isHydrated, childrenRef, employeeInfo, nickname, visitorNickname])
 
   return (
     <div
@@ -62,7 +67,7 @@ export default function Landing({
             animate={{ height: childrenHeight }}
             transition={{ duration: 1, ease: cubicBezier(0.85, 0, 0.15, 1) }}
           >
-            {!loginRefreshToken && <LandingLogin ref={childrenRef} />}
+            {!(loginRefreshToken || isVisitorMode) && <LandingLogin ref={childrenRef} />}
             {employeeInfo && <LandingWelcome ref={childrenRef} />}
           </motion.div>
         )}
