@@ -339,10 +339,35 @@ export const usePunch = () => {
   const addressList = useAtomValue(addressListAtom)
   const [currentAddressId, setCurrentAddressId] = useAtom(currentAddressIdAtom)
   const [monthDetail, setMonthDetail] = useAtom(monthDetailAtom)
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
   const errorHandler = useErrorHandler()
 
   const postCardGps = useCallback(async (): Promise<CardGpsResponse> => {
     try {
+      if (isVisitorMode) {
+        const date = new Date()
+        const timeStart = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+        const timeEnd =
+          date.getHours() * 60 + date.getMinutes() > 12 * 60
+            ? date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : ''
+        const cardTime = date.toISOString()
+        return {
+          code: 200,
+          message: 'success',
+          data: {
+            timeStart,
+            timeEnd,
+            cardTime,
+            isTemperatureOpen: false,
+            isBindDevice: false,
+            isRequiredReason: false,
+            isOverAttendance: false,
+            overAttCardDataId: 0
+          }
+        }
+      }
+
       if (!accessToken || !deviceId) {
         throw new Error('accessToken or deviceId is required!')
       }
@@ -383,7 +408,7 @@ export const usePunch = () => {
       errorHandler.backend(error, 'postCardGps')
       throw error
     }
-  }, [accessToken, deviceId, addressList, currentAddressId, errorHandler])
+  }, [isVisitorMode, accessToken, deviceId, addressList, currentAddressId, errorHandler])
 
   const punchInOut = useCallback(async (): Promise<boolean> => {
     try {
@@ -428,7 +453,7 @@ export const usePunch = () => {
       throw error
     }
     /* eslint-disable-next-line */
-  }, [postCardGps, errorHandler])
+  }, [postCardGps, errorHandler, isVisitorMode])
 
   return {
     punchInOut

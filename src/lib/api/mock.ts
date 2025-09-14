@@ -3,7 +3,7 @@ import type { EmployeeInfoResponse, AddressList, MonthDetailDataItem } from '@/l
 export const mockEmployeeInfo: EmployeeInfoResponse = {
   empSelfPhoto: 'https://randomuser.me/api/portraits/men/75.jpg',
   empBid: 12345,
-  positionName: '',
+  positionName: 'Visitor',
   hireDate: new Date().getTime(),
   depId: 101,
   depName: '',
@@ -52,15 +52,28 @@ export const mockMonthDetail: MonthDetailDataItem[] = (() => {
     const date = new Date(year, month, i)
     const weekDay = date.getDay()
     const isWeekend = weekDay === 0 || weekDay === 6
-    const timestamp = date.getTime()
+    const isPast = date < today
+    const isToday = date.toDateString() === today.toDateString()
+
+    let timeStart = ''
+    let timeEnd = ''
+
+    if (!isWeekend) {
+      if (isPast) {
+        timeStart = '09:30'
+        timeEnd = '18:30'
+      } else if (isToday) {
+        timeStart = '09:30'
+      }
+    }
 
     monthDetail.push({
-      date: timestamp,
+      date: date.getTime(),
       dateString: `${year}/${String(month + 1).padStart(2, '0')}/${String(i).padStart(2, '0')}`,
       weekDay: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][weekDay],
       workTypeString: isWeekend ? '休息日' : '工作日',
-      timeStart: isWeekend ? '' : '09:30',
-      timeEnd: isWeekend ? '' : '18:30',
+      timeStart,
+      timeEnd,
       festivalName: '',
       workType: isWeekend ? 2 : 1,
       isWorkDay: !isWeekend,

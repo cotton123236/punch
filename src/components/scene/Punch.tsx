@@ -5,6 +5,7 @@ import { motion, useAnimate, cubicBezier } from 'motion/react'
 import { useEffect, useState, useRef, useLayoutEffect } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
+  isVisitorModeAtom,
   monthDetailAtom,
   addressListAtom,
   currentAddressIdAtom,
@@ -25,6 +26,8 @@ import Badge from '@/components/ui/Badge'
 import { LiquidGlass } from 'simple-liquid-glass'
 
 const AddressList = ({ className, isPunched }: { className?: string; isPunched: boolean | null }) => {
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
+
   const monthDetail = useAtomValue(monthDetailAtom)
   const addressList = useAtomValue(addressListAtom)
   const windowWidth = useAtomValue(windowWidthAtom)
@@ -39,7 +42,14 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
 
   // 計算 initial slide
   const getInitaiSlide = (): number => {
-    if (!addressList || !monthDetail) return 0
+    if (!addressList || !monthDetail) {
+      return 0
+    }
+
+    if (isVisitorMode) {
+      return addressList.findIndex((address) => address.id === 'home') || 0
+    }
+
     const currentAddressIndex = addressList.findIndex((address) => address.id === currentAddressId) || 0
     const todayDetail = monthDetail.find(
       (detail) => new Date(detail.date).toLocaleDateString('en') === new Date().toLocaleDateString('en')
@@ -102,6 +112,7 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
   // update swiper to off address when isPunched
   useEffect(() => {
     if (!isPunched || !addressList || !swiper.current) return
+
     const offAddressIndex = addressList.findIndex((address) => address.id === 'off') || 0
     const closestOffAddressIndex =
       Math.floor(swiper.current.realIndex / addressList.length) * addressList.length + offAddressIndex
@@ -313,26 +324,32 @@ const Clock = ({
   const isDragging = useAtomValue(isDraggingAtom)
   const isSafariOrIOS = useAtomValue(isSafariOrIOSAtom)
 
+  // Effect for Punch Animation
   useEffect(() => {
+    if (isPunched === null) return
     if (isPunched) {
-      // Punch in: current text becomes PUNCH!, prev text is the time before punch
-      setPrevText(currentText)
+      setPrevText(currentText) // Use currentText which is the time before punch
       setCurrentText('PUNCH!')
-    } else if (isPunched === false) {
-      // Punch out animation ends: current text is new time, prev is PUNCH!
+    } else {
+      // isPunched is false
       setPrevText('PUNCH!')
       setCurrentText(getTimeString(time))
-      setIsPunched(null) // Reset parent state
-    } else {
-      // Normal ticking
-      const newTimeString = getTimeString(time)
-      if (newTimeString !== currentText) {
-        setPrevText(currentText)
-        setCurrentText(newTimeString)
-      }
+      setIsPunched(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPunched, time])
+  }, [isPunched])
+
+  // Effect for Time Ticking
+  useEffect(() => {
+    if (isPunched) return // Stop ticking when punched
+
+    const newTimeString = getTimeString(time)
+    if (newTimeString !== currentText) {
+      setPrevText(currentText)
+      setCurrentText(newTimeString)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [time, isPunched])
 
   const maxLength = Math.max(currentText.length, prevText.length)
   const currentArray = currentText.split('')

@@ -58,7 +58,7 @@ export default function Landing({
         )}
       >
         <Sunrise
-          className="ease-in-out-sm cursor-pointer duration-700 hover:rotate-45"
+          className="ease-in-out-sm cursor-pointer duration-500 hover:rotate-270"
           onClick={() => setIsSettingsOpen(true)}
         />
         {isHydrated && (
