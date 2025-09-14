@@ -14,7 +14,8 @@ import {
   employeeInfoAtom,
   monthDetailAtom,
   addressListAtom,
-  nicknameAtom
+  nicknameAtom,
+  timeAtom
 } from '@/store/atoms'
 import TextGenerateEffect from '@/components/aceternity/TextGenerateEffect'
 import { cn } from '@/lib/utils'
@@ -36,6 +37,7 @@ export default function LandingWelcome({
   const setAddressList = useSetAtom(addressListAtom)
   const [employeeInfo, setEmployeeInfo] = useAtom(employeeInfoAtom)
   const nickname = useAtomValue(nicknameAtom)
+  const time = useAtomValue(timeAtom)
   const [welcomeWords, setWelcomeWords] = useState<string>('')
 
   const handleSignOut = () => {
@@ -54,11 +56,10 @@ export default function LandingWelcome({
     const name = nickname || employeeInfo?.name
     if (!name) return
 
-    const date = new Date()
-    const time = date.getHours()
-    const day = date.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const hours = time.getHours()
+    const day = time.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 
-    const timeString = time < 12 ? 'morning' : time < 18 ? 'afternoon' : 'evening'
+    const timeString = hours < 12 ? 'morning' : hours < 18 ? 'afternoon' : 'evening'
     let specificMessage = ''
 
     switch (day) {
@@ -78,7 +79,7 @@ export default function LandingWelcome({
     }
 
     setWelcomeWords(`Good ${timeString}, ${name}.\n${specificMessage}`)
-  }, [nickname, employeeInfo])
+  }, [nickname, employeeInfo, time])
 
   return (
     <div

@@ -17,7 +17,9 @@ import {
   errorMessageAtom,
   successMessageAtom,
   windowWidthAtom,
-  isSettingsOpenAtom
+  isSettingsOpenAtom,
+  timeAtom,
+  dateAtom
 } from '@/store/atoms'
 import { useAuth, useData } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
@@ -30,25 +32,37 @@ import Nav from '@/components/ui/Nav'
 import Settings from '@/components/ui/Settings'
 
 export default function Home() {
+  // Activate the global timer
+  useAtomValue(timeAtom)
+
   const { login } = useAuth()
   const { getEmployeeInfo, getAddressList, getMonthDetail } = useData()
+
   const loginData = useAtomValue(loginAtom)
   const loginRefreshToken = useAtomValue(loginRefreshTokenAtom)
   const isLogin = useAtomValue(isLoginAtom)
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
   const isDataLoaded = useAtomValue(isDataLoadedAtom)
+
   const nav = useAtomValue(navAtom)
   const setNavActiveIndex = useSetAtom(navActiveIndexAtom)
   const setWindowWidth = useSetAtom(windowWidthAtom)
   const [isHydrated, setIsHydrated] = useAtom(isHydratedAtom)
   const [isAnimated, setIsAnimated] = useState(false)
+
   const sceneScrollerRef = useRef<HTMLDivElement>(null!)
   const landingRef = useRef<HTMLDivElement>(null!)
   const punchRef = useRef<HTMLDivElement>(null!)
   const calendarRef = useRef<HTMLDivElement>(null!)
+
   const punchTheme = useAtomValue(punchThemeAtom)
   const punchThemeActiveIndex = useAtomValue(punchThemeActiveIndexAtom)
+
   const isSettingsOpen = useAtomValue(isSettingsOpenAtom)
+
+  const date = useAtomValue(dateAtom)
+  const prevDateRef = useRef(date)
+
   const [errorMessages, setErrorMessage] = useAtom(errorMessageAtom)
   const [successMessages, setSuccessMessage] = useAtom(successMessageAtom)
 
@@ -128,6 +142,17 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLogin])
 
+  // 切換日期時獲取月度詳情
+  useEffect(() => {
+    // 檢查是否真的是 date 變更（不是初始化）
+    if (prevDateRef.current !== date && isDataLoaded) {
+      getMonthDetail()
+    }
+    prevDateRef.current = date
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, isDataLoaded])
+
+  // 資料載入後設定動畫
   useEffect(() => {
     let timer: NodeJS.Timeout
     if (isDataLoaded) {
@@ -140,6 +165,7 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [isDataLoaded])
 
+  // 切換 scene 時設定 nav active index
   useEffect(() => {
     const element = sceneScrollerRef.current
     if (!element) return
@@ -164,7 +190,7 @@ export default function Home() {
       <Loader />
       <div
         className={cn(
-          'ease-in-out-lg h-dvh w-dvw transition-[filter,opacity,scale] duration-800',
+          'ease-in-out-lg h-dvh w-dvw origin-top transition-[filter,opacity,scale] duration-800',
           isSettingsOpen && 'scale-90 opacity-30 blur-sm lg:scale-95 lg:opacity-20'
         )}
       >

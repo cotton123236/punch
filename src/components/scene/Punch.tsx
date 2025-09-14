@@ -13,7 +13,8 @@ import {
   isPunchingAtom,
   globalLoadingAtom,
   windowWidthAtom,
-  isSafariOrIOSAtom
+  isSafariOrIOSAtom,
+  timeAtom
 } from '@/store/atoms'
 import { usePunch } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
@@ -301,42 +302,37 @@ const Clock = ({
   setIsPunched: (isPunched: boolean | null) => void
   className?: string
 }) => {
-  const time = new Date()
-  const prevTime = new Date(time.getTime() - 1000 * 60)
-  const getTimeString = (date?: Date) => {
-    return (date || new Date()).toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
-  }
-  const timeString = getTimeString(time)
-  const prevTimeString = getTimeString(prevTime)
-  const [currentText, setCurrentText] = useState<string>(timeString)
-  const [prevText, setPrevText] = useState<string>(prevTimeString)
+  const time = useAtomValue(timeAtom)
+  const getTimeString = (date: Date) =>
+    date.toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+
+  const [currentText, setCurrentText] = useState(getTimeString(time))
+  const [prevText, setPrevText] = useState(getTimeString(new Date(time.getTime() - 60000)))
+
   const isInClock = useAtomValue(isInClockAtom)
   const isDragging = useAtomValue(isDraggingAtom)
   const isSafariOrIOS = useAtomValue(isSafariOrIOSAtom)
 
   useEffect(() => {
-    if (isPunched === null) return
     if (isPunched) {
-      setPrevText(getTimeString())
+      // Punch in: current text becomes PUNCH!, prev text is the time before punch
+      setPrevText(currentText)
       setCurrentText('PUNCH!')
-    } else {
+    } else if (isPunched === false) {
+      // Punch out animation ends: current text is new time, prev is PUNCH!
       setPrevText('PUNCH!')
-      setCurrentText(getTimeString())
-      setIsPunched(null)
+      setCurrentText(getTimeString(time))
+      setIsPunched(null) // Reset parent state
+    } else {
+      // Normal ticking
+      const newTimeString = getTimeString(time)
+      if (newTimeString !== currentText) {
+        setPrevText(currentText)
+        setCurrentText(newTimeString)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPunched])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isPunched) return
-      const currentTimeString = getTimeString()
-      if (currentTimeString === currentText) return
-      setPrevText(getTimeString(new Date(new Date().getTime() - 1000 * 60)))
-      setCurrentText(currentTimeString)
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [isPunched, currentText])
+  }, [isPunched, time])
 
   const maxLength = Math.max(currentText.length, prevText.length)
   const currentArray = currentText.split('')

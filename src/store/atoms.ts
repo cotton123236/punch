@@ -149,3 +149,18 @@ export const isSafariAtom = atom<boolean>(() => {
 export const isSafariOrIOSAtom = atom<boolean>((get) => {
   return get(isIOSAtom) || get(isSafariAtom)
 })
+
+// Global time atom
+export const timeAtom = atom<Date>(new Date())
+
+export const dateAtom = atom<number>((get) => {
+  return get(timeAtom).getDate()
+})
+
+timeAtom.onMount = (set) => {
+  const intervalId = setInterval(() => {
+    set(new Date())
+  }, 1000)
+
+  return () => clearInterval(intervalId)
+}
