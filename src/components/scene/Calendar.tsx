@@ -38,7 +38,7 @@ const CalendarItem = ({
         }
       }}
       data-calendar-item
-      className={cn('min-h-[8.125rem] w-full px-12 py-6', className)}
+      className={cn('min-h-[8.125rem] w-full px-12 py-6', isToday && 'is-today', className)}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}

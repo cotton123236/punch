@@ -47,8 +47,8 @@ export default function Badge({ className }: { className?: string }) {
 }
 
 const Scene = () => {
-  const { size, camera } = useThree()
-  const cameraZ = Math.max(size.height / 80, 12)
+  const { camera, size } = useThree()
+  const cameraZ = Math.max((window.innerHeight || size.height) / 80, 12)
 
   useEffect(() => {
     camera.position.set(0, 0, cameraZ)
@@ -383,7 +383,7 @@ const createStyledTextTexture = async (
   const fontFamily = 'Afacad, Noto Sans TC, sans-serif'
   const backgroundColor = theme === 'light' ? '#ffffff' : '#1e1e1e'
   const primaryTextColor = theme === 'light' ? '#181818' : '#d1d1d1'
-  const secondaryTextColor = theme === 'light' ? '#999999' : '#777777'
+  const secondaryTextColor = theme === 'light' ? '#c1c1c1' : '#555555'
   const nameFont = '500 72px Alice, Noto Sans TC, sans-serif'
   const nameText = nickname || employeeInfo?.name || '姓名'
   const empNoFont = `400 16px ${fontFamily}`
@@ -454,12 +454,12 @@ const createStyledTextTexture = async (
 
   const drawDepName = () => {
     // 1. Measure Name to find its right edge
-    context.font = '500 72px Alice, Noto Sans TC, sans-serif'
+    context.font = nameFont
     const nameWidth = context.measureText(nameText).width
     const nameRightBoundary = bleed + nameWidth
 
     // 2. Measure EmpNo to find its "keep out" zone
-    context.font = `400 16px ${fontFamily}`
+    context.font = empNoFont
     const empNoWidth = context.measureText(empNoText).width
     const safeStartX = bleed + 4 + empNoWidth + 20
 
