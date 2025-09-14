@@ -205,7 +205,7 @@ export default function Settings({ className }: { className?: string }) {
       <div
         className={cn(
           'ease-in-out-lg absolute -bottom-9 left-0 z-20 w-full duration-800 md:bottom-12 md:left-1/2 md:w-[90%] md:max-w-md md:-translate-x-1/2',
-          !isSettingsOpen && 'translate-y-full md:translate-y-[calc(100%+3rem)]'
+          !isSettingsOpen && 'translate-y-full scale-120 md:translate-y-[calc(100%+3rem)]'
         )}
       >
         <LiquidGlass
@@ -231,7 +231,7 @@ export default function Settings({ className }: { className?: string }) {
               <div className="mt-6 flex items-center justify-between gap-4">
                 <span>Nickname</span>
                 <input
-                  id="starttime"
+                  id="nickname"
                   value={inputNickname}
                   className="placeholder:text-secondary-foreground text-primary autofill:bg-background h-6 py-2 text-right outline-none"
                   placeholder="nickname"

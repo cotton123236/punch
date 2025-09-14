@@ -191,7 +191,7 @@ export default function Home() {
       <div
         className={cn(
           'ease-in-out-lg h-dvh w-dvw origin-top transition-[filter,opacity,scale] duration-800',
-          isSettingsOpen && 'scale-90 opacity-30 blur-sm lg:scale-95 lg:opacity-20'
+          isSettingsOpen && 'scale-90 opacity-30 blur-sm lg:scale-95'
         )}
       >
         <div

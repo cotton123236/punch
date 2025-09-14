@@ -37,7 +37,7 @@ export default function Switch({
           className={cn(
             'h-full w-full transition-[background-color] duration-300',
             isChecked
-              ? 'bg-[color-mix(in_srgb,var(--color-white)_75%,transparent)]'
+              ? 'bg-[color-mix(in_srgb,var(--color-white)_80%,transparent)]'
               : 'bg-[color-mix(in_srgb,var(--color-white)_25%,transparent)]'
           )}
         />
