@@ -61,14 +61,34 @@ export default function Settings({ className }: { className?: string }) {
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
 
-  const isValidTimeFormat = (timeString: string) => {
-    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
-    return timeRegex.test(timeString)
+  const isValidTimeFormat = (timeString: string, type: 'start' | 'end') => {
+    const timeRegex = /^(0[9]|10):[0-5][0-9]$/
+    const endTimeRegex = /^(18|19):[0-5][0-9]$/
+
+    if (type === 'start') {
+      if (!timeRegex.test(timeString)) return false
+      const [hour] = timeString.split(':').map(Number)
+      return hour >= 9 && hour < 11
+    } else {
+      if (!endTimeRegex.test(timeString)) return false
+      const [hour] = timeString.split(':').map(Number)
+      return hour >= 18 && hour < 20
+    }
   }
 
   const handlePunchTheme = () => {
     setPunchThemeActiveIndex((prev) => (prev + 1) % punchTheme.length)
   }
+
+  // set initial input notification time when visitor mode is changed
+  useEffect(() => {
+    if (!isVisitorMode) {
+      setIsNotificationEnabled(isNotificationEnabled)
+      setInputNotificationStartTime(notificationStartTime)
+      setInputNotificationEndTime(notificationEndTime)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisitorMode])
 
   // set initial input nickname
   useEffect(() => {
@@ -292,7 +312,7 @@ export default function Settings({ className }: { className?: string }) {
                           placeholder="09:30"
                           onChange={(e) => setInputNotificationStartTime(e.target.value)}
                           onBlur={() => {
-                            if (!isValidTimeFormat(inputNotificationStartTime) && hasOpened.current) {
+                            if (!isValidTimeFormat(inputNotificationStartTime, 'start') && hasOpened.current) {
                               setInputNotificationStartTime('09:30')
                             }
                           }}
@@ -307,7 +327,7 @@ export default function Settings({ className }: { className?: string }) {
                           placeholder="18:30"
                           onChange={(e) => setInputNotificationEndTime(e.target.value)}
                           onBlur={() => {
-                            if (!isValidTimeFormat(inputNotificationEndTime) && hasOpened.current) {
+                            if (!isValidTimeFormat(inputNotificationEndTime, 'end') && hasOpened.current) {
                               setInputNotificationEndTime('18:30')
                             }
                           }}

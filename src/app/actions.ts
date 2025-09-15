@@ -158,8 +158,6 @@ export async function sendScheduledNotifications() {
       return { success: true, message: 'No subscriptions found' }
     }
 
-    console.log(rows)
-
     const notifications: Array<Promise<unknown>> = []
     // 建立一個 UTC+8 時區的當前時間
     const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
@@ -175,35 +173,35 @@ export async function sendScheduledNotifications() {
       const [endHour, endMinute] = endTime.split(':').map(Number)
       const userEndMinutes = endHour * 60 + endMinute
 
-      const hitStartTime = currentMinutes >= userStartMinutes && currentMinutes < userStartMinutes + 5
-      const hitEndTime = currentMinutes >= userEndMinutes && currentMinutes < userEndMinutes + 5
+      const hitStartTime = currentMinutes >= userStartMinutes - 5 && currentMinutes < userStartMinutes + 5
+      const hitEndTime = currentMinutes >= userEndMinutes - 5 && currentMinutes < userEndMinutes + 5
 
-      // if (hitStartTime || hitEndTime) {
-      // }
-      const sub = {
-        endpoint,
-        expirationTime: expirationTime || null,
-        keys: { auth: keys_auth, p256dh: keys_p256dh }
-      }
+      if (hitStartTime || hitEndTime) {
+        const sub = {
+          endpoint,
+          expirationTime: expirationTime || null,
+          keys: { auth: keys_auth, p256dh: keys_p256dh }
+        }
 
-      const message = hitStartTime ? '該打卡上班了！' : '別忘了打卡下班！'
+        const message = hitStartTime ? '該打卡上班了！' : '別忘了打卡下班！'
 
-      notifications.push(
-        webpush
-          .sendNotification(
-            sub,
-            JSON.stringify({
-              title: '打卡提醒',
-              body: message
+        notifications.push(
+          webpush
+            .sendNotification(
+              sub,
+              JSON.stringify({
+                title: '打卡提醒',
+                body: message
+              })
+            )
+            .catch(async (err) => {
+              console.error(`Failed for ${endpoint}`, err)
+              if (err.statusCode === 410 || err.statusCode === 404) {
+                await unsubscribeUser(endpoint)
+              }
             })
-          )
-          .catch(async (err) => {
-            console.error(`Failed for ${endpoint}`, err)
-            if (err.statusCode === 410 || err.statusCode === 404) {
-              await unsubscribeUser(endpoint)
-            }
-          })
-      )
+        )
+      }
     }
 
     if (notifications.length > 0) {

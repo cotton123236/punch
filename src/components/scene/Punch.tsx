@@ -430,9 +430,13 @@ export default function Punch({
               throw new Error('Punch in/out has been denied!')
             } else {
               setIsPunched(true)
-              setTimeout(() => {
-                setIsPunched(false)
-              }, 3000)
+              await new Promise((resolve) => setTimeout(resolve, 3000))
+              setIsPunched(false)
+              await new Promise((resolve) => setTimeout(resolve, 800))
+              const ref = document.getElementById('calendar')
+              if (ref) {
+                ref.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }
             }
           } catch (error) {
             console.warn(error)

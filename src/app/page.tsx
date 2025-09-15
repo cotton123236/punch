@@ -154,15 +154,28 @@ export default function Home() {
 
   // 資料載入後設定動畫
   useEffect(() => {
-    let timer: NodeJS.Timeout
     if (isDataLoaded) {
-      timer = setTimeout(() => {
+      const animationTimer = setTimeout(() => {
         setIsAnimated(true)
+
+        // 延遲後檢查 URL 參數
+        const checkUrlTimer = setTimeout(() => {
+          const params = new URLSearchParams(window.location.search)
+          if (params.get('nav') === 'punch') {
+            const ref = document.getElementById('punch')
+            if (!ref) return
+
+            ref.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
+
+        return () => clearTimeout(checkUrlTimer)
       }, 1000)
+
+      return () => clearTimeout(animationTimer)
     } else {
       setIsAnimated(false)
     }
-    return () => clearTimeout(timer)
   }, [isDataLoaded])
 
   // 切換 scene 時設定 nav active index

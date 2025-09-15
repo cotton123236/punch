@@ -4,8 +4,6 @@ import { sendScheduledNotifications } from '@/app/actions'
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
 
-  console.log(authHeader, authHeader === `Bearer ${process.env.CRON_SECRET}`)
-
   // Security Check: Verify the secret token from the environment variables.
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 })
