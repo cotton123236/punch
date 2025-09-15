@@ -433,7 +433,7 @@ export default function Punch({
               await new Promise((resolve) => setTimeout(resolve, 3000))
               setIsPunched(false)
               await new Promise((resolve) => setTimeout(resolve, 800))
-              const ref = document.getElementById('calendar')
+              const ref = document.querySelector('.is-today')
               if (ref) {
                 ref.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }
