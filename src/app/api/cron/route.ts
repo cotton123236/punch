@@ -4,6 +4,8 @@ import { sendScheduledNotifications } from '@/app/actions'
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
 
+  console.log(authHeader, authHeader === `Bearer ${process.env.CRON_SECRET}`)
+
   // Security Check: Verify the secret token from the environment variables.
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 })
@@ -14,9 +16,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: result })
   } catch (error) {
     console.error('Cron job failed:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to execute cron job' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Failed to execute cron job' }, { status: 500 })
   }
 }

@@ -75,7 +75,7 @@ export default function LandingWelcome({
         specificMessage = 'Relax and recharge!\nEnjoy your weekend!'
         break
       case 1: // Monday
-        specificMessage = "Hello Monday!\nLet's make it\na great week!"
+        specificMessage = "Let's make it a great\nstart of the week!"
         break
       case 5: // Friday
         specificMessage = 'Happy Friday!\nJust one more push!'
