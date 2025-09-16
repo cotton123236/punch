@@ -40,13 +40,19 @@ export default function LandingLogin({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
     if (!loginData.account || !loginData.password || !loginDeviceId) {
       setErrorMessage('Account, Password and Device ID are required!')
       return
     }
-    setGlobalLoading(true)
-    await login()
-    setDeviceId(loginDeviceId)
+
+    try {
+      setGlobalLoading(true)
+      await login()
+      setDeviceId(loginDeviceId)
+    } catch {
+      setGlobalLoading(false)
+    }
   }
 
   return (
