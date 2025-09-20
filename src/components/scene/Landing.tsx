@@ -43,7 +43,7 @@ export default function Landing({
         setChildrenHeight(childrenRef.current.getBoundingClientRect().height)
       }, 50)
     }
-  }, [isHydrated, childrenRef, employeeInfo, nickname, visitorNickname])
+  }, [loginRefreshToken, isHydrated, childrenRef, employeeInfo, nickname, visitorNickname])
 
   return (
     <div

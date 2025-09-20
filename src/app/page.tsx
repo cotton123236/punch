@@ -117,15 +117,22 @@ export default function Home() {
 
   // 自動登入 effect
   useEffect(() => {
-    if (loginRefreshToken && !loginData.account && !loginData.password) {
-      setGlobalLoading(true)
-
+    const autoLogin = async () => {
       try {
-        login()
+        const isLoginSuccess = await login()
+        if (!isLoginSuccess) {
+          signOut()
+          setGlobalLoading(false)
+        }
       } catch {
         signOut()
         setGlobalLoading(false)
       }
+    }
+
+    if (loginRefreshToken && !loginData.account && !loginData.password) {
+      setGlobalLoading(true)
+      autoLogin()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loginRefreshToken])

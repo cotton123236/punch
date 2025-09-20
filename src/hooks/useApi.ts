@@ -152,7 +152,7 @@ export const useAuth = () => {
     }
   }, [errorHandler, cid, pid, loginRefreshToken])
 
-  const login = useCallback(async () => {
+  const login = useCallback(async (): Promise<boolean> => {
     try {
       const userTokenResponse = await postUserToken()
       await apiClient.auth.userTokenCookies(userTokenResponse.access_token)
@@ -169,9 +169,11 @@ export const useAuth = () => {
         const accessToken = await postLoginRefresh()
         setAccessToken(accessToken)
       }
+
+      return true
     } catch (error) {
       errorHandler.both(error, 'Login Failed! Please try again or check your account and password.', 'login')
-      throw error
+      return false
     }
   }, [
     setUserToken,
