@@ -2,23 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence, cubicBezier } from 'motion/react'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { RESET } from 'jotai/utils'
-import {
-  isVisitorModeAtom,
-  visitorNicknameAtom,
-  userTokenAtom,
-  loginRefreshTokenAtom,
-  accessTokenAtom,
-  cidAtom,
-  pidAtom,
-  deviceIdAtom,
-  employeeInfoAtom,
-  monthDetailAtom,
-  addressListAtom,
-  nicknameAtom,
-  timeAtom
-} from '@/store/atoms'
+import { useAtomValue } from 'jotai'
+import { isVisitorModeAtom, visitorNicknameAtom, employeeInfoAtom, nicknameAtom, timeAtom } from '@/store/atoms'
+import { useAuth } from '@/hooks/useApi'
 import TextGenerateEffect from '@/components/aceternity/TextGenerateEffect'
 import { cn } from '@/lib/utils'
 
@@ -29,34 +15,18 @@ export default function LandingWelcome({
   ref?: React.RefObject<HTMLDivElement>
   className?: string
 }) {
-  const [isVisitorMode, setIsVisitorMode] = useAtom(isVisitorModeAtom)
+  const { signOut } = useAuth()
+
+  const isVisitorMode = useAtomValue(isVisitorModeAtom)
   const visitorNickname = useAtomValue(visitorNicknameAtom)
 
-  const setUserToken = useSetAtom(userTokenAtom)
-  const setLoginRefreshToken = useSetAtom(loginRefreshTokenAtom)
-  const setAccessToken = useSetAtom(accessTokenAtom)
-  const setCid = useSetAtom(cidAtom)
-  const setPid = useSetAtom(pidAtom)
-  const setDeviceId = useSetAtom(deviceIdAtom)
-  const setMonthDetail = useSetAtom(monthDetailAtom)
-  const setAddressList = useSetAtom(addressListAtom)
-  const [employeeInfo, setEmployeeInfo] = useAtom(employeeInfoAtom)
+  const employeeInfo = useAtomValue(employeeInfoAtom)
   const nickname = useAtomValue(nicknameAtom)
   const time = useAtomValue(timeAtom)
   const [welcomeWords, setWelcomeWords] = useState<string>('')
 
   const handleSignOut = () => {
-    setUserToken(RESET)
-    setLoginRefreshToken(RESET)
-    setCid(RESET)
-    setPid(RESET)
-    setDeviceId(RESET)
-    setAccessToken('')
-    setMonthDetail(null)
-    setAddressList(null)
-    setEmployeeInfo(null)
-
-    setIsVisitorMode(false)
+    signOut()
   }
 
   useEffect(() => {

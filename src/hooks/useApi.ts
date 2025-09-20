@@ -11,6 +11,7 @@ import type {
   CardGpsResponse
 } from '@/lib/api/client'
 import { useAtom, useSetAtom, useAtomValue } from 'jotai'
+import { RESET } from 'jotai/utils'
 import { useCallback } from 'react'
 import { apiClient } from '@/lib/api/client'
 import { mockEmployeeInfo, mockAddressList, mockMonthDetail } from '@/lib/api/mock'
@@ -75,11 +76,16 @@ export const useErrorHandler = () => {
 export const useAuth = () => {
   const loginData = useAtomValue(loginAtom)
   const [userToken, setUserToken] = useAtom(userTokenAtom)
-  const [loginRefreshToken, setloginRefreshToken] = useAtom(loginRefreshTokenAtom)
+  const [loginRefreshToken, setLoginRefreshToken] = useAtom(loginRefreshTokenAtom)
   const [cid, setCid] = useAtom(cidAtom)
   const [pid, setPid] = useAtom(pidAtom)
   const setUserInfo = useSetAtom(userInfoAtom)
   const setAccessToken = useSetAtom(accessTokenAtom)
+  const setDeviceId = useSetAtom(deviceIdAtom)
+  const setMonthDetail = useSetAtom(monthDetailAtom)
+  const setAddressList = useSetAtom(addressListAtom)
+  const setEmployeeInfo = useSetAtom(employeeInfoAtom)
+  const setIsVisitorMode = useSetAtom(isVisitorModeAtom)
   const errorHandler = useErrorHandler()
 
   const postUserToken = useCallback(async (): Promise<UserTokenResponse> => {
@@ -155,7 +161,7 @@ export const useAuth = () => {
 
       if (!loginRefreshToken || !cid || !pid) {
         const loginTokenResponse = await postLoginToken()
-        setloginRefreshToken(loginTokenResponse.refresh)
+        setLoginRefreshToken(loginTokenResponse.refresh)
         setCid(loginTokenResponse.data.cid)
         setPid(loginTokenResponse.data.pid)
         setAccessToken(loginTokenResponse.access)
@@ -170,7 +176,7 @@ export const useAuth = () => {
   }, [
     setUserToken,
     loginRefreshToken,
-    setloginRefreshToken,
+    setLoginRefreshToken,
     cid,
     setCid,
     pid,
@@ -183,8 +189,34 @@ export const useAuth = () => {
     setAccessToken
   ])
 
+  const signOut = useCallback(async () => {
+    setUserToken(RESET)
+    setLoginRefreshToken(RESET)
+    setCid(RESET)
+    setPid(RESET)
+    setDeviceId(RESET)
+    setAccessToken('')
+    setMonthDetail(null)
+    setAddressList(null)
+    setEmployeeInfo(null)
+
+    setIsVisitorMode(false)
+  }, [
+    setUserToken,
+    setLoginRefreshToken,
+    setCid,
+    setPid,
+    setDeviceId,
+    setAccessToken,
+    setMonthDetail,
+    setAddressList,
+    setEmployeeInfo,
+    setIsVisitorMode
+  ])
+
   return {
-    login
+    login,
+    signOut
   }
 }
 

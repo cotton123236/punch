@@ -35,7 +35,7 @@ export default function Home() {
   // Activate the global timer
   useAtomValue(timeAtom)
 
-  const { login } = useAuth()
+  const { login, signOut } = useAuth()
   const { getEmployeeInfo, getAddressList, getMonthDetail } = useData()
 
   const loginData = useAtomValue(loginAtom)
@@ -119,7 +119,13 @@ export default function Home() {
   useEffect(() => {
     if (loginRefreshToken && !loginData.account && !loginData.password) {
       setGlobalLoading(true)
-      login()
+
+      try {
+        login()
+      } catch {
+        signOut()
+        setGlobalLoading(false)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loginRefreshToken])

@@ -80,16 +80,6 @@ export default function Settings({ className }: { className?: string }) {
     setPunchThemeActiveIndex((prev) => (prev + 1) % punchTheme.length)
   }
 
-  // set initial input notification time when visitor mode is changed
-  useEffect(() => {
-    if (!isVisitorMode) {
-      setIsNotificationEnabled(isNotificationEnabled)
-      setInputNotificationStartTime(notificationStartTime)
-      setInputNotificationEndTime(notificationEndTime)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisitorMode])
-
   // set initial input nickname
   useEffect(() => {
     if (employeeInfo && !nickname) {
@@ -230,6 +220,7 @@ export default function Settings({ className }: { className?: string }) {
                 body
               })
             } else {
+              console.log('setIsNotificationEnabled', false)
               setIsNotificationEnabled(false)
             }
           } else {
