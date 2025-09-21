@@ -158,9 +158,16 @@ export async function sendScheduledNotifications() {
       return { success: true, message: 'No subscriptions found' }
     }
 
-    const notifications: Array<Promise<unknown>> = []
     // 建立一個 UTC+8 時區的當前時間
     const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
+    const currentDay = now.getDay() // 0 = 星期日, 1 = 星期一, ..., 6 = 星期六
+
+    // 檢查是否為工作日 (星期一到星期五)
+    if (currentDay === 0 || currentDay === 6) {
+      return { success: true, message: 'No notifications sent on weekends' }
+    }
+
+    const notifications: Array<Promise<unknown>> = []
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
     // 從第 2 行開始 (因為第 1 行是表頭)
@@ -173,10 +180,8 @@ export async function sendScheduledNotifications() {
       const [endHour, endMinute] = endTime.split(':').map(Number)
       const userEndMinutes = endHour * 60 + endMinute
 
-      // const hitStartTime = currentMinutes >= userStartMinutes - 5 && currentMinutes < userStartMinutes + 5
-      // const hitEndTime = currentMinutes >= userEndMinutes - 5 && currentMinutes < userEndMinutes + 5
-      const hitStartTime = true
-      const hitEndTime = true
+      const hitStartTime = currentMinutes >= userStartMinutes && currentMinutes < userStartMinutes + 5
+      const hitEndTime = currentMinutes >= userEndMinutes && currentMinutes < userEndMinutes + 5
 
       if (hitStartTime || hitEndTime) {
         const sub = {

@@ -247,7 +247,7 @@ export default function Settings({ className }: { className?: string }) {
             <div className="flex flex-col">
               {/* theme */}
               <div className="flex items-center justify-between gap-4">
-                <span>Theme</span>
+                <div>Theme</div>
                 <div
                   className="bg-sunrise ease-in-out-sm h-8 w-8 cursor-pointer rounded-full duration-700 hover:rotate-45"
                   onClick={handlePunchTheme}
@@ -255,7 +255,7 @@ export default function Settings({ className }: { className?: string }) {
               </div>
               {/* nickname */}
               <div className="mt-6 flex items-center justify-between gap-4">
-                <span>Nickname</span>
+                <div>Nickname</div>
                 <input
                   id="nickname"
                   value={inputNickname}
@@ -271,7 +271,19 @@ export default function Settings({ className }: { className?: string }) {
               </div>
               {/* notification */}
               <div className="mt-6 flex items-center justify-between gap-4">
-                <span>Notification</span>
+                <div>
+                  Notification
+                  <div
+                    className={cn(
+                      'ease-in-out-lg grid grid-rows-[0fr] overflow-hidden duration-500',
+                      isNotificationEnabled && 'grid-rows-[1fr]'
+                    )}
+                  >
+                    <div className="min-h-0">
+                      <p className="text-primary-foreground text-xs">(Monday to Friday)</p>
+                    </div>
+                  </div>
+                </div>
                 {isSupported ? (
                   <Switch
                     checked={isNotificationEnabled}
