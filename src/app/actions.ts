@@ -173,8 +173,10 @@ export async function sendScheduledNotifications() {
       const [endHour, endMinute] = endTime.split(':').map(Number)
       const userEndMinutes = endHour * 60 + endMinute
 
-      const hitStartTime = currentMinutes >= userStartMinutes - 5 && currentMinutes < userStartMinutes + 5
-      const hitEndTime = currentMinutes >= userEndMinutes - 5 && currentMinutes < userEndMinutes + 5
+      // const hitStartTime = currentMinutes >= userStartMinutes - 5 && currentMinutes < userStartMinutes + 5
+      // const hitEndTime = currentMinutes >= userEndMinutes - 5 && currentMinutes < userEndMinutes + 5
+      const hitStartTime = true
+      const hitEndTime = true
 
       if (hitStartTime || hitEndTime) {
         const sub = {
