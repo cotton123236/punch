@@ -23,6 +23,7 @@ import {
 } from '@/store/atoms'
 import type { EmployeeInfoResponse } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
+import { useWebHaptics } from 'web-haptics/react'
 // import { useControls } from 'leva'
 
 type RigidBodyApi = ComponentRef<typeof RigidBody> & {
@@ -135,6 +136,7 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   const [isInClock, setIsInClock] = useAtom(isInClockAtom)
   const setIsPunching = useSetAtom(isPunchingAtom)
   const setIsDragging = useSetAtom(isDraggingAtom)
+  const { trigger } = useWebHaptics()
   const [cardTexture, setCardTexture] = useState<CanvasTexture>()
 
   useEffect(() => {
@@ -233,6 +235,7 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
 
           if (isOverlapping !== isInClock) {
             setIsInClock(isOverlapping)
+            if (isOverlapping) trigger('nudge')
           }
         }
       }

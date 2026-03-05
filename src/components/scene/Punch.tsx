@@ -18,6 +18,7 @@ import {
   timeAtom
 } from '@/store/atoms'
 import { usePunch } from '@/hooks/useApi'
+import { useWebHaptics } from 'web-haptics/react'
 import { cn } from '@/lib/utils'
 import type { Swiper as SwiperType } from 'swiper'
 import { FreeMode, Parallax } from 'swiper/modules'
@@ -417,6 +418,7 @@ export default function Punch({
   const [isPunching, setIsPunching] = useAtom(isPunchingAtom)
   const [isPunched, setIsPunched] = useState<boolean | null>(null)
   const { punchInOut } = usePunch()
+  const { trigger } = useWebHaptics()
   const clockRef = useRef<HTMLDivElement>(null!)
 
   useEffect(() => {
@@ -430,6 +432,7 @@ export default function Punch({
               throw new Error('Punch in/out has been denied!')
             } else {
               setIsPunched(true)
+              trigger('success')
               await new Promise((resolve) => setTimeout(resolve, 3000))
               setIsPunched(false)
               await new Promise((resolve) => setTimeout(resolve, 800))
@@ -439,6 +442,7 @@ export default function Punch({
               }
             }
           } catch (error) {
+            trigger('error')
             console.warn(error)
           } finally {
             setGlobalLoading(false)

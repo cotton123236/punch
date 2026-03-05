@@ -12,6 +12,7 @@ import {
   isSettingsOpenAtom
 } from '@/store/atoms'
 import { cn } from '@/lib/utils'
+import { useWebHaptics } from 'web-haptics/react'
 // import LiquidGlass from 'liquid-glass-react'
 import { LiquidGlass } from 'simple-liquid-glass'
 
@@ -22,6 +23,7 @@ export default function Nav() {
   const deviceSize = useAtomValue(deviceSizeAtom)
   const isDragging = useAtomValue(isDraggingAtom)
   const isSafariOrIOS = useAtomValue(isSafariOrIOSAtom)
+  const { trigger } = useWebHaptics()
   const navList = {
     sm: [
       { name: 'Home', id: 'home' },
@@ -42,6 +44,7 @@ export default function Nav() {
     const ref = document.getElementById(navItem.id)
     if (!ref) return
 
+    trigger(10)
     ref.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
     if (navItem.id === 'calendar') {
