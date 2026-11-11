@@ -1,12 +1,39 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence, cubicBezier } from 'motion/react'
 import { useAtomValue } from 'jotai'
 import { isVisitorModeAtom, visitorNicknameAtom, employeeInfoAtom, nicknameAtom, timeAtom } from '@/store/atoms'
 import { useAuth } from '@/hooks/useApi'
 import TextGenerateEffect from '@/components/aceternity/TextGenerateEffect'
 import { cn } from '@/lib/utils'
+
+// 依名字與時間產生歡迎詞
+const getWelcomeWords = (name: string, time: Date) => {
+  const hours = time.getHours()
+  const day = time.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+  const timeString = hours < 12 ? 'morning' : hours < 18 ? 'afternoon' : 'evening'
+  let specificMessage = ''
+
+  switch (day) {
+    case 0: // Sunday
+    case 6: // Saturday
+      specificMessage = 'Relax and recharge!\nEnjoy your weekend!'
+      break
+    case 1: // Monday
+      specificMessage = "Let's make it a great\nstart of the week!"
+      break
+    case 5: // Friday
+      specificMessage = 'Happy Friday!\nJust one more push!'
+      break
+    default: // Tuesday, Wednesday, Thursday
+      specificMessage = 'Hope you have\na productive day!'
+      break
+  }
+
+  return `Good ${timeString}, ${name}.\n${specificMessage}`
+}
 
 export default function LandingWelcome({
   ref,
@@ -29,34 +56,12 @@ export default function LandingWelcome({
     signOut()
   }
 
-  useEffect(() => {
-    const name = isVisitorMode ? visitorNickname : nickname || employeeInfo?.name
-    if (!name) return
-
-    const hours = time.getHours()
-    const day = time.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-
-    const timeString = hours < 12 ? 'morning' : hours < 18 ? 'afternoon' : 'evening'
-    let specificMessage = ''
-
-    switch (day) {
-      case 0: // Sunday
-      case 6: // Saturday
-        specificMessage = 'Relax and recharge!\nEnjoy your weekend!'
-        break
-      case 1: // Monday
-        specificMessage = "Let's make it a great\nstart of the week!"
-        break
-      case 5: // Friday
-        specificMessage = 'Happy Friday!\nJust one more push!'
-        break
-      default: // Tuesday, Wednesday, Thursday
-        specificMessage = 'Hope you have\na productive day!'
-        break
-    }
-
-    setWelcomeWords(`Good ${timeString}, ${name}.\n${specificMessage}`)
-  }, [isVisitorMode, visitorNickname, nickname, employeeInfo, time])
+  // 在 render 階段同步歡迎詞；沒有名字時（例如登出動畫期間）保留上一次的文字
+  const name = isVisitorMode ? visitorNickname : nickname || employeeInfo?.name
+  const nextWelcomeWords = name ? getWelcomeWords(name, time) : null
+  if (nextWelcomeWords !== null && nextWelcomeWords !== welcomeWords) {
+    setWelcomeWords(nextWelcomeWords)
+  }
 
   return (
     <div

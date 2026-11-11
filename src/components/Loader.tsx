@@ -10,10 +10,14 @@ export default function Loader({ className }: { className?: string }) {
   const [shouldRender, setShouldRender] = useState(false)
   const animationStartTimeRef = useRef<number | null>(null)
 
+  // 開始 loading 時，在 render 階段立即顯示，避免在 effect 中同步 setState
+  if (globalLoading && !shouldRender) {
+    setShouldRender(true)
+  }
+
   useEffect(() => {
     if (globalLoading) {
-      // 當開始 loading 時立即顯示並記錄開始時間
-      setShouldRender(true)
+      // 記錄動畫開始時間
       animationStartTimeRef.current = Date.now()
     } else if (shouldRender && animationStartTimeRef.current) {
       // 當結束 loading 時，計算到下一個完整週期結束的時間

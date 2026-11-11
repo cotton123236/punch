@@ -38,7 +38,7 @@ const CalendarItem = ({
         }
       }}
       data-calendar-item
-      className={cn('min-h-[8.125rem] w-full px-12 py-6', isToday && 'is-today', className)}
+      className={cn('min-h-32.5 w-full px-12 py-6', isToday && 'is-today', className)}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -48,7 +48,7 @@ const CalendarItem = ({
       >
         <span
           className={cn(
-            'inline-block min-w-[4.5rem] pb-2 text-[4rem] leading-[1.15em]',
+            'inline-block min-w-18 pb-2 text-[4rem] leading-[1.15em]',
             isToday ? 'text-sunrise' : 'text-secondary-foreground'
           )}
         >
@@ -80,7 +80,7 @@ const CalendarItem = ({
                 <span className={cn(isToday ? 'text-primary-foreground' : 'text-tertiary-foreground')}>/</span>
                 <span
                   className={cn(
-                    'inline-block min-w-[1.375rem] text-center',
+                    'inline-block min-w-5.5 text-center',
                     isToday ? 'text-primary-foreground' : 'text-tertiary-foreground'
                   )}
                 >
@@ -91,7 +91,7 @@ const CalendarItem = ({
           ) : null}
         </div>
         {isAbnormal && (
-          <div className="bg-sunrise absolute top-1/2 -left-6 h-[.375rem] w-[.375rem] -translate-y-1/2 rounded-full"></div>
+          <div className="bg-sunrise absolute top-1/2 -left-6 h-1.5 w-1.5 -translate-y-1/2 rounded-full"></div>
         )}
       </motion.div>
     </div>
@@ -128,7 +128,8 @@ export default function Calendar({
   }, [])
 
   // 慣性滾動動畫
-  const inertiaScroll = useCallback(() => {
+  // 使用具名函式表達式，讓遞迴呼叫參照自身，而不是在宣告前存取外部變數
+  const inertiaScroll = useCallback(function step() {
     if (!scrollerRef.current) {
       animationFrame.current = null
       return
@@ -140,7 +141,7 @@ export default function Calendar({
     scrollerRef.current.scrollTop = newScrollTop
     velocity.current *= 0.95 // 減速係數
 
-    animationFrame.current = requestAnimationFrame(inertiaScroll)
+    animationFrame.current = requestAnimationFrame(step)
   }, [])
 
   // 滑鼠按下事件

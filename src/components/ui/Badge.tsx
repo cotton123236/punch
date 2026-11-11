@@ -123,7 +123,11 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
     linearDamping: 2
   }
   const { nodes, materials } = useGLTF('/models/tag.glb')
-  const texture = useTexture('/models/band.png')
+  // 在材質載入時設定重複模式，避免在 render 階段修改 hook 回傳的值
+  const texture = useTexture('/models/band.png', (loadedTexture) => {
+    loadedTexture.wrapS = loadedTexture.wrapT = RepeatWrapping
+    loadedTexture.needsUpdate = true
+  })
 
   const isVisitorMode = useAtomValue(isVisitorModeAtom)
   const visitorNickname = useAtomValue(visitorNicknameAtom)
@@ -155,7 +159,12 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
   const clampMesh = nodes.clamp as Mesh<BufferGeometry>
 
   const { width, height } = useThree((state) => state.size)
-  const [curve] = useState(new CatmullRomCurve3([new Vector3(), new Vector3(), new Vector3(), new Vector3()]))
+  // 只在初始化時建立曲線並設定 curveType，避免每次 render 都修改
+  const [curve] = useState(() => {
+    const initialCurve = new CatmullRomCurve3([new Vector3(), new Vector3(), new Vector3(), new Vector3()])
+    initialCurve.curveType = 'chordal'
+    return initialCurve
+  })
   const [dragged, setDragged] = useState<Vector3 | false>(false)
   const [hovered, setHovered] = useState(false)
 
@@ -271,9 +280,6 @@ const Band = ({ maxSpeed = 50, minSpeed = 10 }) => {
       return () => void (document.body.style.cursor = 'auto')
     }
   }, [hovered, dragged])
-
-  curve.curveType = 'chordal'
-  texture.wrapS = texture.wrapT = RepeatWrapping
 
   return (
     <>

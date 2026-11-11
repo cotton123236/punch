@@ -36,6 +36,8 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
   const isSafariOrIOS = useAtomValue(isSafariOrIOSAtom)
   const [currentAddressId, setCurrentAddressId] = useAtom(currentAddressIdAtom)
   const [swiperWidth, setSwiperWidth] = useState<number>(0)
+  // 玻璃框尺寸（依第一個按鈕量測），避免在 render 階段讀取 ref
+  const [glassSize, setGlassSize] = useState<{ width: number; height: number }>({ width: 8, height: -8 })
   const buttonRefs = useRef<HTMLButtonElement[]>([])
   const swiper = useRef<SwiperType | null>(null)
   const [hasUpdatedSwiper, setHasUpdatedSwiper] = useState<boolean>(false)
@@ -97,6 +99,12 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
         ).toFixed(2)
       )
       setSwiperWidth(width)
+
+      const firstButton = buttonRefs.current[0]
+      setGlassSize({
+        width: (firstButton?.clientWidth || 0) + 8,
+        height: (firstButton?.clientHeight || 0) - 8
+      })
     }
   }, [buttonRefs, addressList, windowWidth])
 
@@ -154,7 +162,7 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
           }}
           style={{ width: swiperWidth }}
           className={cn(
-            'relative z-10 mask-[image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
+            'relative z-10 mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
             hasUpdatedSwiper && 'swiper-updated',
             className
           )}
@@ -184,7 +192,7 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
                   }}
                 >
                   <span
-                    className="inline-block text-base leading-[1] md:text-lg"
+                    className="inline-block text-base leading-none md:text-lg"
                     data-swiper-parallax-scale="0.8"
                     data-swiper-parallax-opacity="0.1"
                   >
@@ -199,10 +207,7 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
             'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 duration-300',
             isDragging ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
           )}
-          style={{
-            width: (buttonRefs.current[0]?.clientWidth || 0) + 8,
-            height: (buttonRefs.current[0]?.clientHeight || 0) - 8
-          }}
+          style={glassSize}
         >
           <LiquidGlass
             mode="preset"
@@ -325,32 +330,33 @@ const Clock = ({
   const isDragging = useAtomValue(isDraggingAtom)
   const isSafariOrIOS = useAtomValue(isSafariOrIOSAtom)
 
-  // Effect for Punch Animation
-  useEffect(() => {
-    if (isPunched === null) return
-    if (isPunched) {
+  // 記錄上一次的 isPunched，在 render 階段偵測變化（取代在 effect 中同步 setState）
+  const [prevIsPunched, setPrevIsPunched] = useState(isPunched)
+
+  if (isPunched !== prevIsPunched) {
+    setPrevIsPunched(isPunched)
+    if (isPunched === true) {
+      // Punch Animation：顯示 PUNCH!
       setPrevText(currentText) // Use currentText which is the time before punch
       setCurrentText('PUNCH!')
-    } else {
-      // isPunched is false
+    } else if (isPunched === false) {
+      // 結束 Punch Animation：切回目前時間
       setPrevText('PUNCH!')
       setCurrentText(getTimeString(time))
-      setIsPunched(null)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPunched])
-
-  // Effect for Time Ticking
-  useEffect(() => {
-    if (isPunched) return // Stop ticking when punched
-
+  } else if (!isPunched) {
+    // Time Ticking：未打卡時跟著時間更新（打卡動畫期間暫停）
     const newTimeString = getTimeString(time)
     if (newTimeString !== currentText) {
       setPrevText(currentText)
       setCurrentText(newTimeString)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [time, isPunched])
+  }
+
+  // 結束動畫後重置父層的 isPunched
+  useEffect(() => {
+    if (isPunched === false) setIsPunched(null)
+  }, [isPunched, setIsPunched])
 
   const maxLength = Math.max(currentText.length, prevText.length)
   const currentArray = currentText.split('')
@@ -370,7 +376,7 @@ const Clock = ({
       <div
         ref={ref}
         className={cn(
-          'punch-clock relative z-10 text-center text-[4.5rem] leading-[1em] transition-transform delay-[30ms] duration-300 perspective-normal lg:text-[clamp(4.5rem,10vh,6rem)]',
+          'punch-clock relative z-10 text-center text-[4.5rem] leading-[1em] transition-transform delay-30 duration-300 perspective-normal lg:text-[clamp(4.5rem,10vh,6rem)]',
           isInClock && 'scale-110',
           className
         )}

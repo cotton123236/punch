@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useSyncExternalStore } from 'react'
 import type { PushSubscription as WebPushSubscription } from 'web-push'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { subscribeUser, unsubscribeUser, sendNotification } from '@/app/actions'
@@ -33,6 +33,14 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray
 }
 
+// 瀏覽器是否支援推播：支援度不會在執行期間改變，因此 subscribe 不需要做任何事
+const subscribePushSupport = () => () => {}
+const getPushSupportSnapshot = () => 'serviceWorker' in navigator && 'PushManager' in window
+const getPushSupportServerSnapshot = () => false
+
+// 用來標記「尚未同步過」的初始值，讓第一次 render 也會執行同步邏輯
+const UNSYNCED = Symbol('unsynced')
+
 export default function Settings({ className }: { className?: string }) {
   const isVisitorMode = useAtomValue(isVisitorModeAtom)
   const [visitorNickname, setVisitorNickname] = useAtom(visitorNicknameAtom)
@@ -58,7 +66,7 @@ export default function Settings({ className }: { className?: string }) {
   } | null>(null)
 
   // push notification
-  const [isSupported, setIsSupported] = useState(false)
+  const isSupported = useSyncExternalStore(subscribePushSupport, getPushSupportSnapshot, getPushSupportServerSnapshot)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
 
   const isValidTimeFormat = (timeString: string, type: 'start' | 'end') => {
@@ -80,8 +88,10 @@ export default function Settings({ className }: { className?: string }) {
     setPunchThemeActiveIndex((prev) => (prev + 1) % punchTheme.length)
   }
 
-  // set initial input nickname
-  useEffect(() => {
+  // set initial input nickname：employeeInfo 變動時（含第一次 render）在 render 階段同步
+  const [syncedEmployeeInfo, setSyncedEmployeeInfo] = useState<typeof employeeInfo | typeof UNSYNCED>(UNSYNCED)
+  if (employeeInfo !== syncedEmployeeInfo) {
+    setSyncedEmployeeInfo(employeeInfo)
     if (employeeInfo && !nickname) {
       setInputNickname(employeeInfo.name)
     }
@@ -91,20 +101,24 @@ export default function Settings({ className }: { className?: string }) {
     if (isVisitorMode && visitorNickname) {
       setInputNickname(visitorNickname)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employeeInfo])
+  }
 
-  useEffect(() => {
+  // 通知時間變動時，在 render 階段同步到 input
+  const [syncedNotificationStartTime, setSyncedNotificationStartTime] = useState(notificationStartTime)
+  if (notificationStartTime !== syncedNotificationStartTime) {
+    setSyncedNotificationStartTime(notificationStartTime)
     if (notificationStartTime) {
       setInputNotificationStartTime(notificationStartTime)
     }
-  }, [notificationStartTime])
+  }
 
-  useEffect(() => {
+  const [syncedNotificationEndTime, setSyncedNotificationEndTime] = useState(notificationEndTime)
+  if (notificationEndTime !== syncedNotificationEndTime) {
+    setSyncedNotificationEndTime(notificationEndTime)
     if (notificationEndTime) {
       setInputNotificationEndTime(notificationEndTime)
     }
-  }, [notificationEndTime])
+  }
 
   // store data
   useEffect(() => {
@@ -127,16 +141,6 @@ export default function Settings({ className }: { className?: string }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSettingsOpen])
-
-  // register service worker
-  const registerServiceWorker = async () => {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      updateViaCache: 'none'
-    })
-    const sub = await registration.pushManager.getSubscription()
-    setSubscription(sub)
-  }
 
   // subscribe to push
   const subscribeToPush = async (): Promise<{ sub: PushSubscription; success: boolean; message?: string } | null> => {
@@ -179,17 +183,23 @@ export default function Settings({ className }: { className?: string }) {
     setSubscription(null)
   }
 
+  // register service worker：在 Promise 回呼中更新 subscription
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true)
-      registerServiceWorker()
-    }
-  }, [])
+    if (!isSupported) return
+
+    navigator.serviceWorker
+      .register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none'
+      })
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((sub) => setSubscription(sub))
+  }, [isSupported])
 
   return (
     <div
       className={cn(
-        'fixed top-0 left-0 z-[999] h-dvh w-dvw overflow-hidden',
+        'fixed top-0 left-0 z-999 h-dvh w-dvw overflow-hidden',
         !isSettingsOpen && 'pointer-events-none',
         className
       )}

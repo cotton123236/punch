@@ -165,6 +165,11 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, isDataLoaded])
 
+  // 資料尚未載入（或被重置）時，在 render 階段直接重置動畫狀態，避免在 effect 中同步 setState
+  if (!isDataLoaded && isAnimated) {
+    setIsAnimated(false)
+  }
+
   // 資料載入後設定動畫
   useEffect(() => {
     if (isDataLoaded) {
@@ -186,8 +191,6 @@ export default function Home() {
       }, 1000)
 
       return () => clearTimeout(animationTimer)
-    } else {
-      setIsAnimated(false)
     }
   }, [isDataLoaded])
 
@@ -222,7 +225,7 @@ export default function Home() {
       >
         <div
           ref={sceneScrollerRef}
-          className="no-scrollbar scene-scroller relative z-[1] flex h-full w-full snap-x snap-mandatory overflow-x-auto"
+          className="no-scrollbar scene-scroller relative z-1 flex h-full w-full snap-x snap-mandatory overflow-x-auto"
         >
           <SceneLanding
             id="home"

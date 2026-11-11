@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 // import Script from 'next/script'
 import { Alice, Noto_Sans_TC, Afacad } from 'next/font/google'
 import ContextProvider from '@/components/ContextProvider'
+import ThemeScript from '@/components/ThemeScript'
 
 const alice = Alice({
   variable: '--font-alice',
@@ -76,24 +77,12 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <script
-          id="theme-script"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  document.documentElement.className = theme;
-                } catch (e) {}
-              })();
-            `
-          }}
-        />
       </head>
       <body
         className={`${alice.variable} ${notoSansTC.variable} ${afacad.variable} overflow-hidden antialiased`}
         suppressHydrationWarning
       >
+        <ThemeScript />
         <ContextProvider>{children}</ContextProvider>
       </body>
     </html>
