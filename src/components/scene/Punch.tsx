@@ -38,7 +38,8 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
   const [swiperWidth, setSwiperWidth] = useState<number>(0)
   // 玻璃框尺寸（依第一個按鈕量測），避免在 render 階段讀取 ref
   const [glassSize, setGlassSize] = useState<{ width: number; height: number }>({ width: 8, height: -8 })
-  const buttonRefs = useRef<HTMLButtonElement[]>([])
+  // 隱藏的量測用按鈕：在 Swiper 渲染前先量好寬度，避免 Swiper 在沒有寬度時初始化
+  const measureRefs = useRef<HTMLButtonElement[]>([])
   const swiper = useRef<SwiperType | null>(null)
   const [hasUpdatedSwiper, setHasUpdatedSwiper] = useState<boolean>(false)
   const repetitions = 4
@@ -88,35 +89,69 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
     return currentAddressIndex
   }
 
-  // 設定 swiper 寬度
-  useEffect(() => {
-    if (buttonRefs.current.length / repetitions === addressList?.length) {
-      const width = Number(
-        (
-          buttonRefs.current
-            .slice(0, addressList.length)
-            .reduce((acc, curr) => acc + curr.getBoundingClientRect().width + 8, 0) - 8
-        ).toFixed(2)
-      )
-      setSwiperWidth(width)
+  // 依隱藏的量測用按鈕計算 swiper 寬度與玻璃框尺寸
+  const measure = () => {
+    if (!addressList?.length) return
+    const buttons = measureRefs.current.slice(0, addressList.length)
+    if (buttons.length !== addressList.length) return
 
-      const firstButton = buttonRefs.current[0]
-      setGlassSize({
-        width: (firstButton?.clientWidth || 0) + 8,
-        height: (firstButton?.clientHeight || 0) - 8
-      })
+    const width = Number(
+      (buttons.reduce((acc, curr) => acc + curr.getBoundingClientRect().width + 8, 0) - 8).toFixed(2)
+    )
+    // 寬度為 0 代表目前無法量測（例如畫面尚未排版），不更新，避免 Swiper 用錯誤寬度初始化
+    if (width <= 0) return
+    setSwiperWidth(width)
+
+    const firstButton = buttons[0]
+    setGlassSize({
+      width: firstButton.clientWidth + 8,
+      height: firstButton.clientHeight - 8
+    })
+  }
+
+  // 重新計算 Swiper 尺寸並把目前的地點置中
+  // （freeMode 下 swiper.update() 只會沿用目前位置，不會重新置中，所以要搭配 slideToLoop）
+  const resyncSwiper = () => {
+    const instance = swiper.current
+    if (!instance || instance.destroyed) return
+    instance.update()
+    instance.slideToLoop(instance.realIndex, 0, false)
+  }
+
+  // 地點清單或視窗寬度變動時重新量測（layout effect：在繪製前完成量測）
+  useLayoutEffect(() => {
+    measure()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressList, windowWidth])
+
+  // 字型載入完成、App 從背景回到前景（含 bfcache 還原）時，重新量測並重新置中
+  useEffect(() => {
+    let isActive = true
+    const handleResync = () => {
+      if (!isActive) return
+      measure()
+      requestAnimationFrame(resyncSwiper)
     }
-  }, [buttonRefs, addressList, windowWidth])
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') handleResync()
+    }
 
-  // update swiper at the first time
+    document.fonts?.ready.then(handleResync)
+    window.addEventListener('pageshow', handleResync)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      isActive = false
+      window.removeEventListener('pageshow', handleResync)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressList])
+
+  // 寬度變動後（例如字型載入、視窗縮放），等新寬度套用到 DOM 再重新置中
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!swiper.current || hasUpdatedSwiper) return
-      swiper.current.update()
-      setHasUpdatedSwiper(true)
-    }, 150)
-    return () => clearTimeout(timer)
-  }, [swiper, hasUpdatedSwiper])
+    const frame = requestAnimationFrame(resyncSwiper)
+    return () => cancelAnimationFrame(frame)
+  }, [swiperWidth])
 
   // update swiper to off address when isPunched
   useEffect(() => {
@@ -142,66 +177,86 @@ const AddressList = ({ className, isPunched }: { className?: string; isPunched: 
         transition={{ duration: 1, ease: cubicBezier(0.85, 0, 0.15, 1) }}
         className="relative"
       >
-        <Swiper
-          modules={[FreeMode, Parallax]}
-          slidesPerView={addressList.length}
-          spaceBetween={8}
-          initialSlide={getInitaiSlide() + addressList.length}
-          loop={true}
-          centeredSlides={true}
-          parallax={true}
-          freeMode={{
-            enabled: true,
-            sticky: true
-          }}
-          onSwiper={(swiperInstance) => {
-            swiper.current = swiperInstance
-          }}
-          onRealIndexChange={(swiperInstance) => {
-            setCurrentAddressId(addressList[swiperInstance.realIndex % addressList.length].id)
-          }}
-          style={{ width: swiperWidth }}
-          className={cn(
-            'relative z-10 mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
-            hasUpdatedSwiper && 'swiper-updated',
-            className
-          )}
+        {/* 隱藏的量測用按鈕：樣式需與 slide 內的按鈕一致 */}
+        <div
+          aria-hidden
+          className="pointer-events-none invisible absolute top-0 left-0 flex w-max"
         >
-          {Array.from({ length: repetitions }, () => addressList)
-            .flat()
-            ?.map((address, index) => (
-              <SwiperSlide
-                key={`${address.id}-${index}`}
-                className="!w-auto"
-              >
-                <button
-                  ref={(el) => {
-                    if (el) {
-                      buttonRefs.current[index] = el
-                    }
-                  }}
-                  type="button"
-                  className={cn(
-                    'cursor-pointer p-2 pt-3 duration-300',
-                    isDragging && currentAddressId !== address.id && 'opacity-0',
-                    currentAddressId === address.id && 'pointer-events-none'
-                  )}
-                  data-address-id={address.id}
-                  onClick={() => {
-                    swiper.current?.slideToLoop(index)
-                  }}
+          {addressList.map((address, index) => (
+            <button
+              key={address.id}
+              ref={(el) => {
+                if (el) {
+                  measureRefs.current[index] = el
+                }
+              }}
+              type="button"
+              tabIndex={-1}
+              className="shrink-0 p-2 pt-3"
+            >
+              <span className="inline-block text-base leading-none md:text-lg">{address.name}</span>
+            </button>
+          ))}
+        </div>
+        {/* 量到寬度後才渲染 Swiper，讓 Swiper 初始化時就拿到正確的容器寬度 */}
+        {swiperWidth > 0 && (
+          <Swiper
+            modules={[FreeMode, Parallax]}
+            slidesPerView={addressList.length}
+            spaceBetween={8}
+            initialSlide={getInitaiSlide() + addressList.length}
+            loop={true}
+            centeredSlides={true}
+            parallax={true}
+            freeMode={{
+              enabled: true,
+              sticky: true
+            }}
+            onSwiper={(swiperInstance) => {
+              swiper.current = swiperInstance
+              setHasUpdatedSwiper(true)
+            }}
+            onRealIndexChange={(swiperInstance) => {
+              setCurrentAddressId(addressList[swiperInstance.realIndex % addressList.length].id)
+            }}
+            style={{ width: swiperWidth }}
+            className={cn(
+              'relative z-10 mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
+              hasUpdatedSwiper && 'swiper-updated',
+              className
+            )}
+          >
+            {Array.from({ length: repetitions }, () => addressList)
+              .flat()
+              ?.map((address, index) => (
+                <SwiperSlide
+                  key={`${address.id}-${index}`}
+                  className="!w-auto"
                 >
-                  <span
-                    className="inline-block text-base leading-none md:text-lg"
-                    data-swiper-parallax-scale="0.8"
-                    data-swiper-parallax-opacity="0.1"
+                  <button
+                    type="button"
+                    className={cn(
+                      'cursor-pointer p-2 pt-3 duration-300',
+                      isDragging && currentAddressId !== address.id && 'opacity-0',
+                      currentAddressId === address.id && 'pointer-events-none'
+                    )}
+                    data-address-id={address.id}
+                    onClick={() => {
+                      swiper.current?.slideToLoop(index)
+                    }}
                   >
-                    {address.name}
-                  </span>
-                </button>
-              </SwiperSlide>
-            ))}
-        </Swiper>
+                    <span
+                      className="inline-block text-base leading-none md:text-lg"
+                      data-swiper-parallax-scale="0.8"
+                      data-swiper-parallax-opacity="0.1"
+                    >
+                      {address.name}
+                    </span>
+                  </button>
+                </SwiperSlide>
+              ))}
+          </Swiper>
+        )}
         <div
           className={cn(
             'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 duration-300',
