@@ -36,7 +36,7 @@ export default function Home() {
   useAtomValue(timeAtom)
 
   const { login, signOut } = useAuth()
-  const { getEmployeeInfo, getAddressList, getMonthDetail } = useData()
+  const { getInitialData, getMonthDetail } = useData()
 
   const loginData = useAtomValue(loginAtom)
   const loginRefreshToken = useAtomValue(loginRefreshTokenAtom)
@@ -142,8 +142,7 @@ export default function Home() {
     if (isLogin) {
       const getAllDataByStep = async () => {
         try {
-          await Promise.all([getEmployeeInfo(), new Promise((resolve) => setTimeout(resolve, 1000))])
-          await Promise.all([getAddressList(), getMonthDetail()])
+          await getInitialData()
         } catch (error) {
           console.error('getAllDataByStep:', error)
         } finally {

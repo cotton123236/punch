@@ -286,15 +286,15 @@ export const useData = () => {
     }
   }, [accessToken, cid, pid, deviceId, errorHandler])
 
-  const getAddressList = useCallback(async () => {
+  // 只抓取地址列表、不寫入 atom，讓呼叫端決定寫入時機
+  const fetchAddressList = useCallback(async (): Promise<AddressListWithId[]> => {
     if (isVisitorMode) {
-      setAddressList(mockAddressList)
-      return
+      return mockAddressList
     }
     try {
       const cardSettingResponse = await postCardSetting()
       const addressList = cardSettingResponse[0]?.addressList ?? []
-      const addressListWithId = [
+      return [
         ...addressList.map((address) => {
           const isCompany = address.address.includes(process.env.NEXT_PUBLIC_COMPANY_ADDRESS || '')
           return {
@@ -310,12 +310,11 @@ export const useData = () => {
           longitude: 0
         }
       ] as AddressListWithId[]
-      setAddressList(addressListWithId)
     } catch (error) {
-      errorHandler.backend(error, 'getAddressList')
+      errorHandler.backend(error, 'fetchAddressList')
       throw error
     }
-  }, [postCardSetting, errorHandler, setAddressList, isVisitorMode])
+  }, [postCardSetting, errorHandler, isVisitorMode])
 
   // month detail
   const postMonthDetail = useCallback(async (): Promise<MonthDetailResponse['data']> => {
@@ -346,24 +345,41 @@ export const useData = () => {
     }
   }, [accessToken, pid, cid, errorHandler])
 
-  const getMonthDetail = useCallback(async () => {
+  // 只抓取月度詳情、不寫入 atom
+  const fetchMonthDetail = useCallback(async (): Promise<MonthDetailResponse['data']> => {
     if (isVisitorMode) {
-      setMonthDetail(mockMonthDetail)
-      return
+      return mockMonthDetail
     }
     try {
-      const monthDetailResponse = await postMonthDetail()
-      setMonthDetail(monthDetailResponse)
+      return await postMonthDetail()
     } catch (error) {
-      errorHandler.backend(error, 'getMonthDetail')
+      errorHandler.backend(error, 'fetchMonthDetail')
       throw error
     }
-  }, [postMonthDetail, errorHandler, setMonthDetail, isVisitorMode])
+  }, [postMonthDetail, errorHandler, isVisitorMode])
+
+  const getMonthDetail = useCallback(async () => {
+    setMonthDetail(await fetchMonthDetail())
+  }, [fetchMonthDetail, setMonthDetail])
+
+  // 初次載入：三支 API 同時發出，但地址與月度詳情要等員工資訊回來且至少滿 1 秒後才寫入，
+  // 維持「歡迎詞先出現 → 再切換版面」的進場動畫節奏
+  const getInitialData = useCallback(async () => {
+    const restPromise = Promise.all([fetchAddressList(), fetchMonthDetail()])
+    // 若員工資訊先失敗而提早結束，避免 restPromise 的錯誤變成 unhandled rejection
+    restPromise.catch(() => {})
+
+    await Promise.all([getEmployeeInfo(), new Promise((resolve) => setTimeout(resolve, 1000))])
+
+    const [addressList, monthDetail] = await restPromise
+    setAddressList(addressList)
+    setMonthDetail(monthDetail)
+  }, [fetchAddressList, fetchMonthDetail, getEmployeeInfo, setAddressList, setMonthDetail])
 
   return {
     getEmployeeInfo,
-    getAddressList,
-    getMonthDetail
+    getMonthDetail,
+    getInitialData
   }
 }
 
