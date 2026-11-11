@@ -30,6 +30,7 @@ import ScenePunch from '@/components/scene/Punch'
 import SceneCalendar from '@/components/scene/Calendar'
 import Nav from '@/components/ui/Nav'
 import Settings from '@/components/ui/Settings'
+import { loadBadge } from '@/components/ui/BadgeLazy'
 
 export default function Home() {
   // Activate the global timer
@@ -114,6 +115,11 @@ export default function Home() {
   useEffect(() => {
     setIsHydrated(true)
   }, [setIsHydrated])
+
+  // 提前下載 3D Badge 的 chunk，與登入、資料 API 同時進行，進入 Punch 頁時即可直接顯示
+  useEffect(() => {
+    loadBadge().catch(() => {})
+  }, [])
 
   // 自動登入 effect
   useEffect(() => {

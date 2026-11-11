@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 import type { Swiper as SwiperType } from 'swiper'
 import { FreeMode, Parallax } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import Badge from '@/components/ui/Badge'
+import { BadgeLazy } from '@/components/ui/BadgeLazy'
 import { LiquidGlass } from 'simple-liquid-glass'
 
 const AddressList = ({ className, isPunched }: { className?: string; isPunched: boolean | null }) => {
@@ -524,7 +524,7 @@ export default function Punch({
         id={id}
         className={cn('p-scene relative flex h-full w-full flex-col items-center justify-center', className)}
       >
-        <Badge className="absolute top-0 left-0 lg:fixed" />
+        <BadgeLazy className="absolute top-0 left-0 lg:fixed" />
         <div
           className={cn(
             'mt-auto flex w-full flex-col items-center gap-1 transition-transform duration-300 md:gap-2',
